@@ -11,12 +11,11 @@ if not(exist('y', 'var'))
 end
 
 n = size(A, 2);
-manifold = spherecomplexfactory(n);
-problem.M = manifold;
+problem.M = spherecomplexfactory(n);
 
-% Define the problem cost function and its Euclidean gradient.
 problem.cost  = @(v, store) cost(structure, A, v, epsilon, y, store);
 problem.egrad = @(v, store) egrad(structure, A, v, epsilon, y, store);
+problem.minimizer = @(v, store) minimizer(structure, A, v, epsilon, y, store);
 end
 
 function store = populate_store(structure, A, v, epsilon, y, store)
@@ -34,10 +33,19 @@ function [cf, store] = cost(structure, A, v, epsilon, y, store)
     d = store.d;
     cf = sum(conj(r) .* r .* d);
 end
+
 function [eg, store] = egrad(structure, A, v, epsilon, y, store)
     store = populate_store(structure, A, v, epsilon, y, store);
     r = store.r;
     d = store.d;
-    z = -r .* d;
-    eg = 2*(A' * z - (structure' * (conj(z) .* z) .* v)); 
+    z = r .* d;
+    eg = -2*(A' * z + (structure' * (conj(z) .* z) .* v)); 
+end
+
+function E = minimizer(structure, A, v, epsilon, y, store)
+    store = populate_store(structure, A, v, epsilon, y, store);
+    r = store.r;
+    d = store.d;
+    z = r .* d;
+    E = z .* (v' .* structure);
 end
