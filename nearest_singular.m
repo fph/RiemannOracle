@@ -1,24 +1,20 @@
-function problem = nearest_singular(structure, A, epsilon, y, use_hessian)
+function problem = nearest_singular(structure, A, use_hessian)
 
 if isempty(structure)
     structure = A ~= 0;
-end
-if not(exist('epsilon', 'var')) || isempty(epsilon)
-    epsilon = 0.0;
-end
-if not(exist('y', 'var')) || isempty(y)
-    y = 0;
 end
 
 n = size(A, 2);
 problem.M = spherecomplexfactory(n);
 
-problem.cost  = @(v, store) cost(structure, A, v, epsilon, y, store);
-problem.egrad = @(v, store) egrad(structure, A, v, epsilon, y, store);
+problem.gencost  = @(v, epsilon, y, store) cost(structure, A, v, epsilon, y, store);
+problem.genegrad = @(v, epsilon, y, store) egrad(structure, A, v, epsilon, y, store);
 if use_hessian
-    problem.ehess = @(v, w, store) ehess(structure, A, v, epsilon, y, w, store);
+    problem.genehess = @(v, w, epsilon, y, store) ehess(structure, A, v, epsilon, y, w, store);
 end
-problem.minimizer = @(v, store) minimizer(structure, A, v, epsilon, y, store);
+problem.genminimizer = @(v, epsilon, y, store) minimizer(structure, A, v, epsilon, y, store);
+
+problem = apply_regularization(problem, 0, 0);
 end
 
 function store = populate_store(structure, A, v, epsilon, y, store)
@@ -60,7 +56,7 @@ function [eh, store] = ehess(structure, A, v, epsilon, y, w, store)
     z = d .* r;
     rightpart = -A*w - z .* (structure * (conj(v) .* w + conj(w) .* v));
     dz = store.d .* rightpart;
-    dEtz = (structure' * (conj(z) .* z)) .* w + (structure' * (conj(dz) .* z)) .* v;
-    Etdz = (structure' * (conj(z) .* dz)) .* v;
-    eh = -2 * (A'*dz + Etdz + dEtz);
+    d1 = (structure' * (conj(z) .* z)) .* w;
+    d2 = (structure' * ((conj(z) .* dz) + (conj(dz) .* z))) .* v;
+    eh = -2 * (A'*dz + d1 + d2);
 end
