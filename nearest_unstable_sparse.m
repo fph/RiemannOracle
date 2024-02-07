@@ -21,7 +21,7 @@ problem.gencost  = @(v, epsilon, y, store) cost(structure, target, A, v, epsilon
 problem.genegrad = @(v, epsilon, y, store) egrad(structure, target, A, v, epsilon, y, store);
 problem.genminimizer = @(v, epsilon, y, store) minimizer(structure, target, A, v, epsilon, y, store);
 problem.genconstraint = @(v, epsilon, y, store) constraint(structure, target, A, v, epsilon, y, store);
-% problem.recover_exact = @(v, tol) recover_exact(structure, target, A, v, tol);
+problem.recover_exact = @(v, tol) recover_exact(structure, target, A, v, tol);
 
 problem = apply_regularization(problem, 0, 0, false);
 end
@@ -88,12 +88,12 @@ end
 
 % Tries to recover an "exact" v from a problem converging to a rank-drop
 % point
-% function v_reg = recover_exact(structure, A, v, tol)
-%     store = struct();
-%     store = populate_store(structure, A, v, 0, 0, store);
-%     r = store.r;
-%     d = store.d;
-%     r_reg = r;
-%     r_reg(abs(d) > tol) = 0;
-%     v_reg = - A \ r_reg;
-% end
+function v_reg = recover_exact(structure, A, v, tol)
+    store = struct();
+    store = populate_store(structure, A, v, 0, 0, store);
+    r = store.r;
+    d = store.d;
+    r_reg = r;
+    r_reg(abs(d) > tol) = 0;
+    v_reg = - A \ r_reg;
+end
