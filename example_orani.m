@@ -2,7 +2,7 @@ addpath(genpath('manopt/manopt'));
 
 A = mmread('orani678.mtx');
 
-problem = nearest_singular([], A, true);
+problem = nearest_singular_sparse([], A, true);
 
 options = struct();
 options.maxiter = 10000;

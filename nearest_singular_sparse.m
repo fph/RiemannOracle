@@ -1,4 +1,4 @@
-function problem = nearest_singular(structure, A, use_hessian)
+function problem = nearest_singular_sparse(structure, A, use_hessian)
 
 if isempty(structure)
     structure = A ~= 0;
