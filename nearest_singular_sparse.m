@@ -1,4 +1,6 @@
 function problem = nearest_singular_sparse(structure, A, use_hessian)
+% Create Manopt problem structure for the nearest singular sparse matrix
+
 
 if isempty(structure)
     structure = A ~= 0;

@@ -26,7 +26,7 @@ function x = penalty_method(problem, x0, options)
         [x, cost, info] = manoptsolve(regproblem, x, options);
         cons = regproblem.constraint(x, struct());
         orig_cost = problem.cost(x, struct());
-        fprintf("Solved in %d trustregions step(s). Cost = %e, non-regularized cost = %e, constraint norm: %e.\n", ...
+        fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, constraint norm: %e.\n", ...
             length(info), cost, orig_cost, norm(cons));
         if not(isempty(options.y))
             y = y + 1/epsilon * cons;
