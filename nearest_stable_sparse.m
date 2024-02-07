@@ -58,7 +58,7 @@ function [eg, store] = egrad(structure, target, A, v, epsilon, y, store)
     eg = -2*(A' * z - conj(lambda)*z + (structure' * (conj(z) .* z) .* v)); 
 end
 
-function [E, lambda] = minimizer(structure, target, A, v, epsilon, y, store)
+function [E, lambda, store] = minimizer(structure, target, A, v, epsilon, y, store)
     store = populate_store(structure, target, A, v, epsilon, y, store);
     r = store.r;
     d = store.d;
@@ -81,14 +81,10 @@ end
 % 
 % % compute the value of the constraint (A+E)v --- note that this is not zero
 % % if epsilon is nonzero.
-% function [prod, store] = constraint(structure, A, v, epsilon, y, store)
-%     store = populate_store(structure, A, v, epsilon, y, store);
-%     r = store.r;
-%     d = store.d;
-%     z = d .* r;
-%     E = z .* (v' .* structure);
-%     prod = store.Av + E * v;
-% end
+function [prod, store] = constraint(structure, target, A, v, epsilon, y, store)
+    [E, lambda, store] = minimizer(structure, target, A, v, epsilon, y, store);
+    prod = -store.r + E * v;
+end
 
 % Tries to recover an "exact" v from a problem converging to a rank-drop
 % point
