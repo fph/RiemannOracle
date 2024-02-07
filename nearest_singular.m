@@ -18,6 +18,7 @@ if use_hessian
 end
 problem.genminimizer = @(v, epsilon, y, store) minimizer(structure, A, v, epsilon, y, store);
 problem.genconstraint = @(v, epsilon, y, store) constraint(structure, A, v, epsilon, y, store);
+problem.recover_exact = @(v, tol) recover_exact(structure, A, v, tol);
 
 problem = apply_regularization(problem, 0, 0, true);
 end
@@ -77,4 +78,16 @@ function [prod, store] = constraint(structure, A, v, epsilon, y, store)
     z = d .* r;
     E = z .* (v' .* structure);
     prod = store.Av + E * v;
+end
+
+% Tries to recover an "exact" v from a problem converging to a rank-drop
+% point
+function v_reg = recover_exact(structure, A, v, tol)
+    store = struct();
+    store = populate_store(structure, A, v, 0, 0, store);
+    r = store.r;
+    d = store.d;
+    r_reg = r;
+    r_reg(abs(d) > tol) = 0;
+    v_reg = - A \ r_reg;
 end
