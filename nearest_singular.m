@@ -5,7 +5,11 @@ if isempty(structure)
 end
 
 n = size(A, 2);
-problem.M = spherecomplexfactory(n);
+if isreal(A)
+    problem.M = spherefactory(n);
+else
+    problem.M = spherecomplexfactory(n);
+end
 
 problem.gencost  = @(v, epsilon, y, store) cost(structure, A, v, epsilon, y, store);
 problem.genegrad = @(v, epsilon, y, store) egrad(structure, A, v, epsilon, y, store);
@@ -13,13 +17,16 @@ if use_hessian
     problem.genehess = @(v, w, epsilon, y, store) ehess(structure, A, v, epsilon, y, w, store);
 end
 problem.genminimizer = @(v, epsilon, y, store) minimizer(structure, A, v, epsilon, y, store);
+problem.genconstraint = @(v, epsilon, y, store) constraint(structure, A, v, epsilon, y, store);
 
-problem = apply_regularization(problem, 0, 0);
+problem = apply_regularization(problem, 0, 0, true);
 end
 
 function store = populate_store(structure, A, v, epsilon, y, store)
     if ~isfield(store, 'r')
-        store.r = -A*v - epsilon * y;
+        Av = A * v;
+        store.Av = Av;
+        store.r = -Av - epsilon * y;
         d = 1./ (structure * (conj(v) .* v) + epsilon);
         d(~isfinite(d)) = 0;
         store.d = d;
@@ -59,4 +66,15 @@ function [eh, store] = ehess(structure, A, v, epsilon, y, w, store)
     d1 = (structure' * (conj(z) .* z)) .* w;
     d2 = (structure' * ((conj(z) .* dz) + (conj(dz) .* z))) .* v;
     eh = -2 * (A'*dz + d1 + d2);
+end
+
+% compute the value of the constraint (A+E)v --- note that this is not zero
+% if epsilon is nonzero.
+function [prod, store] = constraint(structure, A, v, epsilon, y, store)
+    store = populate_store(structure, A, v, epsilon, y, store);
+    r = store.r;
+    d = store.d;
+    z = d .* r;
+    E = z .* (v' .* structure);
+    prod = store.Av + E * v;
 end
