@@ -22,10 +22,12 @@ function x = penalty_method(problem, x0, options)
 
     for k = 1:options.outer_iterations
         regproblem = apply_regularization(problem, epsilon, y);
-        fprintf("Solving: iter=%d, epsilon=%g, norm(y)=%g\n", k, epsilon, norm(y));
-        x = manoptsolve(regproblem, x, options);
+        fprintf("Solving: iter=%d, epsilon=%e, norm(y)=%e...\n", k, epsilon, norm(y));
+        [x, cost, info] = manoptsolve(regproblem, x, options);
         cons = regproblem.constraint(x, struct());
-        fprintf("Constraint norm: %g\n", norm(cons));
+        orig_cost = problem.cost(x, struct());
+        fprintf("Solved in %d trustregions step(s). Cost = %e, non-regularized cost = %e, constraint norm: %e.\n", ...
+            length(info), cost, orig_cost, norm(cons));
         if not(isempty(options.y))
             y = y + 1/epsilon * cons;
         end
