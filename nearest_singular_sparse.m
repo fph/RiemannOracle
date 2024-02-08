@@ -1,6 +1,5 @@
 function problem = nearest_singular_sparse(structure, A, use_hessian)
-% Create Manopt problem structure for the nearest singular sparse matrix
-
+% Create a Manopt problem structure for the nearest singular sparse matrix
 
 if isempty(structure)
     structure = A ~= 0;
@@ -13,19 +12,27 @@ else
     problem.M = spherecomplexfactory(n);
 end
 
-problem.gencost  = @(v, epsilon, y, store) cost(structure, A, v, epsilon, y, store);
-problem.genegrad = @(v, epsilon, y, store) egrad(structure, A, v, epsilon, y, store);
+% populate the struct with generic functions that include regularization
+problem.gencost  = @(epsilon, y, v, store) cost(structure, A, epsilon, y, v, store);
+problem.genegrad = @(epsilon, y, v, store) egrad(structure, A, epsilon, y, v, store);
 if use_hessian
-    problem.genehess = @(v, w, epsilon, y, store) ehess(structure, A, v, epsilon, y, w, store);
+    problem.genehess = @(epsilon, y, v, w, store) ehess(structure, A, epsilon, y, v, w, store);
 end
-problem.genminimizer = @(v, epsilon, y, store) minimizer(structure, A, v, epsilon, y, store);
-problem.genconstraint = @(v, epsilon, y, store) constraint(structure, A, v, epsilon, y, store);
+problem.genminimizer = @(epsilon, y, v, store) minimizer(structure, A, epsilon, y, v, store);
+problem.genconstraint = @(epsilon, y, v, store) constraint(structure, A, epsilon, y, v, store);
+
+% populate functions from the Manopt interface with zero regularization
+problem = apply_regularization(problem, 0, 0, true);
+
+% additional function outside of the main interface to recover
+% a more exact solution in the case of rank drops, enforcing exact
+% zeros in U'*r
 problem.recover_exact = @(v, tol) recover_exact(structure, A, v, tol);
 
-problem = apply_regularization(problem, 0, 0, true);
 end
 
-function store = populate_store(structure, A, v, epsilon, y, store)
+% populate the 'store', a caching structure
+function store = populate_store(structure, A, epsilon, y, v, store)
     if ~isfield(store, 'r')
         Av = A * v;
         store.Av = Av;
@@ -36,31 +43,31 @@ function store = populate_store(structure, A, v, epsilon, y, store)
     end    
 end
 
-function [cf, store] = cost(structure, A, v, epsilon, y, store)
-    store = populate_store(structure, A, v, epsilon, y, store);
+function [cf, store] = cost(structure, A, epsilon, y, v, store)
+    store = populate_store(structure, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     cf = sum(conj(r) .* r .* d);
 end
 
-function [eg, store] = egrad(structure, A, v, epsilon, y, store)
-    store = populate_store(structure, A, v, epsilon, y, store);
+function [eg, store] = egrad(structure, A, epsilon, y, v, store)
+    store = populate_store(structure, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     z = d .* r;
     eg = -2*(A' * z + (structure' * (conj(z) .* z) .* v)); 
 end
 
-function E = minimizer(structure, A, v, epsilon, y, store)
-    store = populate_store(structure, A, v, epsilon, y, store);
+function E = minimizer(structure, A, epsilon, y, v, store)
+    store = populate_store(structure, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     z = d .* r;
     E = z .* (v' .* structure);
 end
 
-function [eh, store] = ehess(structure, A, v, epsilon, y, w, store)
-    store = populate_store(structure, A, v, epsilon, y, store);
+function [eh, store] = ehess(structure, A, epsilon, y, v, w, store)
+    store = populate_store(structure, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     z = d .* r;
@@ -73,7 +80,7 @@ end
 
 % compute the value of the constraint (A+E)v --- note that this is not zero
 % if epsilon is nonzero.
-function [prod, store] = constraint(structure, A, v, epsilon, y, store)
+function [prod, store] = constraint(structure, A, epsilon, y, v, store)
     store = populate_store(structure, A, v, epsilon, y, store);
     r = store.r;
     d = store.d;

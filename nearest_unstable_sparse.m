@@ -1,4 +1,4 @@
-function problem = nearest_stable_sparse(structure, target, A)
+function problem = nearest_unstable_sparse(structure, target, A)
 % Create Manopt problem structure for the nearest omega-stable sparse matrix
 %
 % problem = nearest_stable_sparse(structure, target, A, use_hessian)
@@ -17,16 +17,16 @@ n = size(A, 2);
 problem.M = spherecomplexfactory(n);
 
 
-problem.gencost  = @(v, epsilon, y, store) cost(structure, target, A, v, epsilon, y, store);
-problem.genegrad = @(v, epsilon, y, store) egrad(structure, target, A, v, epsilon, y, store);
-problem.genminimizer = @(v, epsilon, y, store) minimizer(structure, target, A, v, epsilon, y, store);
-problem.genconstraint = @(v, epsilon, y, store) constraint(structure, target, A, v, epsilon, y, store);
+problem.gencost  = @(epsilon, y, v, store) cost(structure, target, A, epsilon, y, v, store);
+problem.genegrad = @(epsilon, y, v, store) egrad(structure, target, A, epsilon, y, v, store);
+problem.genminimizer = @(epsilon, y, v, store) minimizer(structure, target, A, epsilon, y, v, store);
+problem.genconstraint = @(epsilon, y, v, store) constraint(structure, target, A, epsilon, y, v, store);
 problem.recover_exact = @(v, tol) recover_exact(structure, target, A, v, tol);
 
 problem = apply_regularization(problem, 0, 0, false);
 end
 
-function store = populate_store(structure, target, A, v, epsilon, y, store)
+function store = populate_store(structure, target, A, epsilon, y, v, store)
     if ~isfield(store, 'r')
         Av = A * v;
         r0 = -Av - epsilon * y;
@@ -42,15 +42,15 @@ function store = populate_store(structure, target, A, v, epsilon, y, store)
     end
 end
 
-function [cf, store] = cost(structure, target, A, v, epsilon, y, store)
-    store = populate_store(structure, target, A, v, epsilon, y, store);
+function [cf, store] = cost(structure, target, A, epsilon, y, v, store)
+    store = populate_store(structure, target, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     cf = sum(conj(r) .* r .* d);
 end
 
-function [eg, store] = egrad(structure, target, A, v, epsilon, y, store)
-    store = populate_store(structure, target, A, v, epsilon, y, store);
+function [eg, store] = egrad(structure, target, A, epsilon, y, v, store)
+    store = populate_store(structure, target, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     lambda = store.lambda;
@@ -58,8 +58,8 @@ function [eg, store] = egrad(structure, target, A, v, epsilon, y, store)
     eg = -2*(A' * z - conj(lambda)*z + (structure' * (conj(z) .* z) .* v)); 
 end
 
-function [E, lambda, store] = minimizer(structure, target, A, v, epsilon, y, store)
-    store = populate_store(structure, target, A, v, epsilon, y, store);
+function [E, lambda, store] = minimizer(structure, target, A, epsilon, y, v, store)
+    store = populate_store(structure, target, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     z = d .* r;
@@ -67,8 +67,8 @@ function [E, lambda, store] = minimizer(structure, target, A, v, epsilon, y, sto
     lambda = store.lambda;
 end
 
-% function [eh, store] = ehess(structure, A, v, epsilon, y, w, store)
-%     store = populate_store(structure, A, v, epsilon, y, store);
+% function [eh, store] = ehess(structure, A, epsilon, y, v, w, store)
+%     store = populate_store(structure, A, epsilon, y, v, store);
 %     r = store.r;
 %     d = store.d;
 %     z = d .* r;
@@ -81,14 +81,15 @@ end
 % 
 % % compute the value of the constraint (A+E)v --- note that this is not zero
 % % if epsilon is nonzero.
-function [prod, store] = constraint(structure, target, A, v, epsilon, y, store)
-    [E, lambda, store] = minimizer(structure, target, A, v, epsilon, y, store);
+function [prod, store] = constraint(structure, target, A, epsilon, y, v, store)
+    [E, lambda, store] = minimizer(structure, target, A, epsilon, y, v, store);
     prod = -store.r + E * v;
 end
 
 % Tries to recover an "exact" v from a problem converging to a rank-drop
 % point
 function v_reg = recover_exact(structure, A, v, tol)
+    TODO - unfinished
     store = struct();
     store = populate_store(structure, A, v, 0, 0, store);
     r = store.r;

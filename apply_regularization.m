@@ -9,12 +9,12 @@ if not(exist('force_hessian', 'var'))
     force_hessian = false;
 end
 
-problem.cost = @(v, store) problem.gencost(v, epsilon, y, store);
-problem.egrad = @(v, store) problem.genegrad(v, epsilon, y, store);
+problem.cost = @(v, store) problem.gencost(epsilon, y, v, store);
+problem.egrad = @(v, store) problem.genegrad(epsilon, y, v, store);
 if isfield(problem, 'ehess') || force_hessian
-    problem.ehess = @(v, w, store) problem.genehess(v, w, epsilon, y, store);
+    problem.ehess = @(v, w, store) problem.genehess(epsilon, y, v, w, store);
 end
 
-problem.minimizer = @(v, store) problem.genminimizer(v, epsilon, y, store);
-problem.constraint = @(v, store) problem.genconstraint(v, epsilon, y, store);
+problem.minimizer = @(v, store) problem.genminimizer(epsilon, y, v, store);
+problem.constraint = @(v, store) problem.genconstraint(epsilon, y, v, store);
 
