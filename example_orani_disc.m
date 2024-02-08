@@ -27,7 +27,7 @@ options.epsilon_decrease = 0.8;
 % If isempty(options.y), the vanilla penalty method is used.
 options.y = zeros(size(A,1), 1);
 
-options.outer_iterations = 70;
+options.outer_iterations = 80;
 
 [x cost info] = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 

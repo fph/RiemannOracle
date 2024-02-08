@@ -104,15 +104,18 @@ function [prod, store] = constraint(structure, target, A, epsilon, y, v, store)
     prod = store.Av + E * v - v * lambda;
 end
 
-function v_reg = recover_exact(structure, target, A, v, tol)
+function [v_reg cost_reg] = recover_exact(structure, target, A, v, tol)
     store = populate_store(structure, target, A, 0, 0, v, struct());
     r = store.r;
     d = store.d;
-    % lambda from a model with a small perturbation is more accurate
+    % the lambda from a model with a small perturbation might be more accurate
     % because we avoid the exact singularity, and dlambda/dv = 0.
-    store2 = populate_store(structure, target, A, 1e-12, 0, v, struct());
-    lambda = store2.lambda;
+    % store2 = populate_store(structure, target, A, 1e-12, 0, v, struct());
+    % lambda = store2.lambda;
+    lambda = store.lambda;
     r_reg = r;
     r_reg(abs(d) > tol) = 0;
     v_reg = - (A - lambda*speye(length(A))) \ r_reg;
+    store_reg = populate_store(structure, target, A, 0, 0, v_reg, struct());
+    cost_reg = sum(conj(r_reg) .* r_reg .* store_reg.d);
 end
