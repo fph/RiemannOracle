@@ -2,7 +2,7 @@ function problem = nearest_singular_sparse(structure, A, use_hessian)
 % Create a Manopt problem structure for the nearest singular sparse matrix
 
 if isempty(structure)
-    structure = A ~= 0;
+    structure = double(A ~= 0);
 end
 
 n = size(A, 2);

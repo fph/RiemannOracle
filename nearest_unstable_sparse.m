@@ -6,7 +6,7 @@ function problem = nearest_unstable_sparse(structure, target, A)
 % see nearest_singular_sparse for more comments on this interface
 
 if isempty(structure)
-    structure = A ~= 0;
+    structure = double(A ~= 0);
 end
 
 if strcmp(target, 'Schur')
@@ -69,6 +69,14 @@ function [E, lambda, store] = minimizer(structure, target, A, epsilon, y, v, sto
     lambda = store.lambda;
 end
 
+% The Hessian for this problem is messier, because to compute it we need
+% the Hessian of the squared distance function, and this depends on target.
+%
+% For instance, if target = 'Hurwitz' the Hessian of the squared distance 
+% function is 0, and if target = 'Schur' it is 2I.
+%
+% For now we just avoid the problem, we can live with first-order methods.
+%
 % function [eh, store] = ehess(structure, A, epsilon, y, v, w, store)
 %     store = populate_store(structure, A, epsilon, y, v, store);
 %     r = store.r;
@@ -87,13 +95,13 @@ function [prod, store] = constraint(structure, target, A, epsilon, y, v, store)
     prod = -store.r + E * v;
 end
 
-function v_reg = recover_exact(structure, A, v, tol)
-    TODO - unfinished
+function v_reg = recover_exact(structure, target, A, v, tol)
     store = struct();
-    store = populate_store(structure, A, v, 0, 0, store);
+    store = populate_store(structure, target, A, 0, 0, v, store);
     r = store.r;
     d = store.d;
+    lambda = store.lambda;
     r_reg = r;
     r_reg(abs(d) > tol) = 0;
-    v_reg = - A \ r_reg;
+    v_reg = - (A - lambda*speye(length(A))) \ r_reg;
 end
