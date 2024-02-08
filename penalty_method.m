@@ -40,7 +40,7 @@ function x = penalty_method(problem, x0, options)
             current_epsilon_decrease = 0.5;
             eg = problem.genegrad(epsilon * current_epsilon_decrease, y, x, struct());
             rg = problem.M.egrad2rgrad(x, eg);
-            while norm(rgrad) > 1e-4
+            while norm(rg) > 1e-4
                 current_epsilon_decrease = (1 + current_epsilon_decrease) / 2;
                 eg = problem.genegrad(epsilon * current_epsilon_decrease, y, x, struct());
                 rg = problem.M.egrad2rgrad(x, eg);

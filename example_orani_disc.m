@@ -10,9 +10,7 @@ addpath(genpath('manopt/manopt'));
 
 A = mmread('orani678.mtx');
 
-% problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(1.7293467e-10)), A);
-
-problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(2.5263758e-4)), A);
+problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(1.7293467e-10)), A);
 
 options = struct();
 
@@ -22,14 +20,14 @@ options = struct();
 
 options.maxiter = 1000;
 options.solver = @trustregions;
-options.verbosity = 2;
+options.verbosity = 1;
+options.epsilon_decrease = 0.75;
 
 % specifies an initial value for y in the augmented Lagrangian method. 
 % If isempty(options.y), the vanilla penalty method is used.
 options.y = zeros(size(A,1), 1);
 
-options.outer_iterations = 25;
-options.epsilon_decrease = 0.85;
+options.outer_iterations = 65;
 
 x = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 

@@ -25,6 +25,8 @@ problem.genminimizer = @(epsilon, y, v, store) minimizer(structure, target, A, e
 problem.genconstraint = @(epsilon, y, v, store) constraint(structure, target, A, epsilon, y, v, store);
 problem.recover_exact = @(v, tol) recover_exact(structure, target, A, v, tol);
 
+problem.gencost_with_prescribed_lambda = @(epsilon, y, v, lambda, store) gencost_with_prescribed_lambda(structure, target, A, epsilon, y, v, lambda, store);
+
 problem = apply_regularization(problem, 0, 0);
 end
 
@@ -47,6 +49,13 @@ end
 function [cf, store] = cost(structure, target, A, epsilon, y, v, store)
     store = populate_store(structure, target, A, epsilon, y, v, store);
     r = store.r;
+    d = store.d;
+    cf = sum(conj(r) .* r .* d);
+end
+
+function [cf, store] = gencost_with_prescribed_lambda(structure, target, A, epsilon, y, v, lambda, store)
+    store = populate_store(structure, target, A, epsilon, y, v, store);
+    r = lambda * v - store.Av - epsilon * y;
     d = store.d;
     cf = sum(conj(r) .* r .* d);
 end
@@ -92,15 +101,17 @@ end
 
 function [prod, store] = constraint(structure, target, A, epsilon, y, v, store)
     [E, lambda, store] = minimizer(structure, target, A, epsilon, y, v, store);
-    prod = store.Av + E * v - v * store.lambda;
+    prod = store.Av + E * v - v * lambda;
 end
 
 function v_reg = recover_exact(structure, target, A, v, tol)
-    store = struct();
-    store = populate_store(structure, target, A, 0, 0, v, store);
+    store = populate_store(structure, target, A, 0, 0, v, struct());
     r = store.r;
     d = store.d;
-    lambda = store.lambda;
+    % lambda from a model with a small perturbation is more accurate
+    % because we avoid the exact singularity, and dlambda/dv = 0.
+    store2 = populate_store(structure, target, A, 1e-12, 0, v, struct());
+    lambda = store2.lambda;
     r_reg = r;
     r_reg(abs(d) > tol) = 0;
     v_reg = - (A - lambda*speye(length(A))) \ r_reg;
