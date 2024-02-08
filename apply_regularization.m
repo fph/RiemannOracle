@@ -1,20 +1,22 @@
-function problem = apply_regularization(problem, epsilon, y, force_hessian)
-% use the problem.gen* function to generate a modified problem w/
-% regularization
+function problem = apply_regularization(problem, epsilon, y)
+% generate a new Manopt problem structure with regularization
 %
-% we go for this approach because we'd like to keep the "everything is a
-% struct" approach from Manopt
-
-if not(exist('force_hessian', 'var'))
-    force_hessian = false;
-end
+% Create a new problem structure in which cost(), egrad(), ehess(),
+% minimizer() include the specified regularization, by forwarding these
+% calls to gencost(), genegrad(), etc.
+%
+% Note that only the two-argument versions of the functions are used, for
+% ease of writing, so if you want to call one of these functions outside the
+% solver you need to pass an empty struct: e.g.,
+%
+% >> problem.cost(v, struct())
+%
 
 problem.cost = @(v, store) problem.gencost(epsilon, y, v, store);
 problem.egrad = @(v, store) problem.genegrad(epsilon, y, v, store);
-if isfield(problem, 'ehess') || force_hessian
+if isfield(problem, 'genehess')
     problem.ehess = @(v, w, store) problem.genehess(epsilon, y, v, w, store);
 end
 
 problem.minimizer = @(v, store) problem.genminimizer(epsilon, y, v, store);
 problem.constraint = @(v, store) problem.genconstraint(epsilon, y, v, store);
-

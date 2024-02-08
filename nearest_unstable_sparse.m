@@ -1,7 +1,9 @@
 function problem = nearest_unstable_sparse(structure, target, A)
-% Create Manopt problem structure for the nearest omega-stable sparse matrix
+% Create a Manopt problem structure for the nearest omega-stable sparse matrix
 %
 % problem = nearest_stable_sparse(structure, target, A, use_hessian)
+%
+% see nearest_singular_sparse for more comments on this interface
 
 if isempty(structure)
     structure = A ~= 0;
@@ -23,7 +25,7 @@ problem.genminimizer = @(epsilon, y, v, store) minimizer(structure, target, A, e
 problem.genconstraint = @(epsilon, y, v, store) constraint(structure, target, A, epsilon, y, v, store);
 problem.recover_exact = @(v, tol) recover_exact(structure, target, A, v, tol);
 
-problem = apply_regularization(problem, 0, 0, false);
+problem = apply_regularization(problem, 0, 0);
 end
 
 function store = populate_store(structure, target, A, epsilon, y, v, store)
@@ -79,15 +81,12 @@ end
 %     eh = -2 * (A'*dz + d1 + d2);
 % end
 % 
-% % compute the value of the constraint (A+E)v --- note that this is not zero
-% % if epsilon is nonzero.
+
 function [prod, store] = constraint(structure, target, A, epsilon, y, v, store)
     [E, lambda, store] = minimizer(structure, target, A, epsilon, y, v, store);
     prod = -store.r + E * v;
 end
 
-% Tries to recover an "exact" v from a problem converging to a rank-drop
-% point
 function v_reg = recover_exact(structure, A, v, tol)
     TODO - unfinished
     store = struct();
