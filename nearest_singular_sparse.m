@@ -84,7 +84,7 @@ function [ehw, store] = ehess(structure, A, epsilon, y, v, w, store)
 end
 
 function [prod, store] = constraint(structure, A, epsilon, y, v, store)
-    store = populate_store(structure, A, v, epsilon, y, store);
+    store = populate_store(structure, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     z = d .* r;
