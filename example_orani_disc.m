@@ -21,15 +21,15 @@ options = struct();
 options.maxiter = 1000;
 options.solver = @trustregions;
 options.verbosity = 1;
-options.epsilon_decrease = 0.75;
+options.epsilon_decrease = 0.8;
 
 % specifies an initial value for y in the augmented Lagrangian method. 
 % If isempty(options.y), the vanilla penalty method is used.
 options.y = zeros(size(A,1), 1);
 
-options.outer_iterations = 65;
+options.outer_iterations = 70;
 
-x = penalty_method(problem, [], options);
+[x cost info] = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 
 cost_reg = problem.cost(x_reg, struct());
-fprintf('Optimal cost function after inserting zeros in A*v: %e.\n', cost_reg);
+fprintf('Optimal cost function after inserting zeros in A*v: %e. sqrt(cost) = %e\n', cost_reg, sqrt(cost_reg));

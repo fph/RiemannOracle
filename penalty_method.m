@@ -1,4 +1,4 @@
-function x = penalty_method(problem, x0, options)
+function [x cost info] = penalty_method(problem, x0, options)
 % x = penalty_method(problem, x0, options)
 %
 % x0 may be empty, as with other Manopt functions.
@@ -35,6 +35,7 @@ function x = penalty_method(problem, x0, options)
         if not(isempty(options.y))
             y = y + 1/epsilon * cons;
         end
+        
         if isempty(options.epsilon_decrease)
             % adaptive decrease
             current_epsilon_decrease = 0.5;
@@ -53,4 +54,6 @@ function x = penalty_method(problem, x0, options)
             epsilon = epsilon * options.epsilon_decrease;
         end    
     end
+    info = struct();
+    info.y = y;
 end
