@@ -94,7 +94,7 @@ end
 
 function v_reg = recover_exact(structure, A, v, tol)
     store = struct();
-    store = populate_store(structure, A, v, 0, 0, store);
+    store = populate_store(structure, A, 0, 0, v, store);
     r = store.r;
     d = store.d;
     r_reg = r;

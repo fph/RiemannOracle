@@ -92,7 +92,7 @@ end
 
 function [prod, store] = constraint(structure, target, A, epsilon, y, v, store)
     [E, lambda, store] = minimizer(structure, target, A, epsilon, y, v, store);
-    prod = -store.r + E * v;
+    prod = store.Av + E * v - v * store.lambda;
 end
 
 function v_reg = recover_exact(structure, target, A, v, tol)

@@ -1,3 +1,8 @@
+%
+% Example script: find the nearest sparse singular matrix to 
+% Matrix Market's benchmark matrix orani678.
+%
+
 addpath(genpath('manopt/manopt'));
 
 A = mmread('orani678.mtx');
@@ -10,7 +15,7 @@ options.verbosity = 1;
 options.solver = @trustregions;
 % specifies an initial value for y in the augmented Lagrangian method. 
 % If isempty(options.y), the vanilla penalty method is used.
-options.y = 0; 
+options.y = zeros(size(A,1), 1);
 
 x = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 

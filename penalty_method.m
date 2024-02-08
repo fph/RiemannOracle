@@ -7,7 +7,7 @@ function x = penalty_method(problem, x0, options)
 % If options.y is not empty, it is used as the starting value for the 
 % dual variable in an augmented Lagrangian method.
 
-    default.starting_epsilon = 1;
+    default.starting_epsilon    = 1;
     default.epsilon_decrease = 0.5;
     default.outer_iterations = 20;
     default.y = [];
@@ -35,6 +35,22 @@ function x = penalty_method(problem, x0, options)
         if not(isempty(options.y))
             y = y + 1/epsilon * cons;
         end
-        epsilon = epsilon * options.epsilon_decrease;      
+        if isempty(options.epsilon_decrease)
+            % adaptive decrease
+            current_epsilon_decrease = 0.5;
+            eg = problem.genegrad(epsilon * current_epsilon_decrease, y, x, struct());
+            rg = problem.M.egrad2rgrad(x, eg);
+            while norm(rgrad) > 1e-4
+                current_epsilon_decrease = (1 + current_epsilon_decrease) / 2;
+                eg = problem.genegrad(epsilon * current_epsilon_decrease, y, x, struct());
+                rg = problem.M.egrad2rgrad(x, eg);
+                if current_epsilon_decrease > 0.95
+                    break
+                end
+            end
+            epsilon = epsilon * current_epsilon_decrease
+        else
+            epsilon = epsilon * options.epsilon_decrease;
+        end    
     end
 end
