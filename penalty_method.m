@@ -12,6 +12,13 @@ function [x cost info] = penalty_method(problem, x0, options)
     default.outer_iterations = 20;
     default.y = [];
 
+    if not(exist('options', 'var'))
+        options = struct();
+    end
+    if not(exist('x0', 'var'))
+        x0 = [];
+    end
+
     options = mergeOptions(default, options);
 
     epsilon = options.starting_epsilon;
@@ -56,4 +63,5 @@ function [x cost info] = penalty_method(problem, x0, options)
     end
     info = struct();
     info.y = y;
+    info.last_epsilon = epsilon;
 end
