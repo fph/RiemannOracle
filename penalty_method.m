@@ -61,7 +61,10 @@ function [x cost info] = penalty_method(problem, x0, options)
             epsilon = epsilon * options.epsilon_decrease;
         end    
     end
+    Delta = regproblem.minimizer(x, struct());
+
     info = struct();
     info.y = y;
     info.last_epsilon = epsilon;
+    info.Delta = Delta;
 end

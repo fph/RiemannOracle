@@ -1,14 +1,23 @@
-function problem = nearest_singular_structured_dense(P, A, use_hessian)
-% Create a Manopt problem structure for the nearest singular structured
-% matrix.
+function problem = nearest_nullity_structured_dense(P, A, l, use_hessian)
+% Create a Manopt problem structure for the nearest structured
+% matrix with prescribed nullity l.
 % Uses a dense mxnxp array P as storage for the perturbation basis
 % We assume (without checking) that this basis is orthogonal.
 
+% TODO: there is a lot of duplication with nearest_sparse_structured_dense
+% (which is essentially the case l=1), we should refactor to fix it.
+
+% we shall keep the notation v even if it is a matrix here, to be consistent
+% with the other files.
+
+% TODO: our choice of having U always be square might not be ideal here,
+% since n*l might be larger than p.
+
 n = size(A, 2);
 if isreal(A)
-    problem.M = spherefactory(n);
+    problem.M = grassmannfactory(n, l);
 else
-    problem.M = spherecomplexfactory(n);
+    problem.M = grassmanncomplexfactory(n);
 end
 
 % populate the struct with generic functions that include the regularization as parameters
@@ -34,9 +43,13 @@ problem.recover_exact = @(v, tol) recover_exact(P, A, v, tol);
 
 end
 
-% create M(v)
 function M = make_M(P, v)
-    M = reshape(pagemtimes(P, v), [size(P,1) size(P,3)]);
+    [m n p] = size(P);
+    [~, l] = size(v);
+    M = zeros(m*l, p);
+    for h = 1:l
+        M((h-1)*m+1:h*m,:) = reshape(pagemtimes(P, v(:,h)), [size(P,1) size(P,3)]);
+    end
 end
 
 % create Delta = \sum P(i)delta(i)
@@ -55,7 +68,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
         store.U = U;
         store.WS = W .* diag(S)';
         store.Av = Av;
-        Utr = -U' * (Av + epsilon * y);
+        Utr = -U' * (Av(:) + epsilon * y);
         store.Utr = Utr;
         s = diag(S);
         store.s = s;
@@ -82,6 +95,7 @@ function [eg, store] = egrad(P, A, epsilon, y, v, store)
     WS = store.WS;
     delta =  WS * aux(1:size(WS,2));
     Delta = make_Delta(P, delta);
+    z = reshape(z, [size(P,1) size(v,2)]);
     eg = (A+Delta)' * z * (-2);
 end
 
@@ -104,10 +118,13 @@ function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     dM = make_M(P, w);
     d = store.d;
     M = store.M;
-    daux = -d .* (U' * (M*(dM'*z) + (A+Delta)*w));
+    ApDw = (A+Delta)*w;
+    daux = -d .* (U' * (M*(dM'*z) + ApDw(:)));
     dz = U * daux;
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
+    z = reshape(z, [size(P,1) size(v,2)]);
+    dz = reshape(dz, [size(P,1) size(v,2)]);
     ehw = (dDelta' * z + (A+Delta)' * dz) * (-2);
 end
 
