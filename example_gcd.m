@@ -16,8 +16,11 @@ A = [1/sqrt(degq) * polytoep(p, degq-1).';
 % all coefficients in p and q are distinct
 P = autobasis(A);
 
+options = struct();
+options.y = 0;
+
 problem = nearest_nullity_structured_dense(P, A, d, true);
-[x cost info] = penalty_method(problem);
+[x cost info] = penalty_method(problem, [], options);
 
 Apert = A + info.Delta;
 pp = sqrt(degq) * Apert(1, 1:length(p));
