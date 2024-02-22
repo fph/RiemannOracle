@@ -7,9 +7,9 @@ function [x cost info] = penalty_method(problem, x0, options)
 % If options.y is not empty, it is used as the starting value for the 
 % dual variable in an augmented Lagrangian method.
 
-    default.starting_epsilon    = 1;
+    default.starting_epsilon = 1;
     default.epsilon_decrease = 0.5;
-    default.outer_iterations = 20;
+    default.max_outer_iterations = 40;
     default.y = [];
 
     if not(exist('options', 'var'))
@@ -29,16 +29,25 @@ function [x cost info] = penalty_method(problem, x0, options)
         y = 0;
     end
 
-    for k = 1:options.outer_iterations
+    k = 0;
+    while(true)
+        k = k + 1;
         regproblem = apply_regularization(problem, epsilon, y);
         
-        fprintf("Solving: iter=%d, epsilon=%e, norm(y)=%e...\n", k, epsilon, norm(y));
+        fprintf("Solving: outer iter=%d, epsilon=%e, norm(y)=%e...\n", k, epsilon, norm(y));
         [x, cost, info] = manoptsolve(regproblem, x, options);
         
-        cons = regproblem.constraint(x, struct());
-        orig_cost = problem.cost(x, struct());
-        fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, constraint norm: %e.\n", ...
-            length(info), cost, orig_cost, norm(cons));
+        [cons, store] = regproblem.constraint(x, struct());
+        orig_cost = problem.cost(x, struct()); % we cannot reuse store because it's a different problem
+        relative_constraint_error = norm(cons) / norm(store.Av);
+        fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, relative constraint error: %e.\n", ...
+            length(info), cost, orig_cost, relative_constraint_error);
+
+        % we want to break out here so we return the y truly used
+        if relative_constraint_error < 1e-16 || k == options.max_outer_iterations
+            break
+        end
+
         if not(isempty(options.y))
             y = y + 1/epsilon * cons;
         end
