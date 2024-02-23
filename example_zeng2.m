@@ -43,7 +43,8 @@ options.maxiter = 1000;
 options.verbose = 1;
 options.max_outer_iterations = 40;
 
-problem = nearest_singular_structured_dense(P, A, true);
+alpha = [p;q];
+problem = nearest_singular_structured_dense(P, alpha, true);
 [x cost info] = penalty_method(problem, [], options);
 
 Apert = A + info.Delta;

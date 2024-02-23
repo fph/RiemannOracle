@@ -4,8 +4,8 @@ function problem = nearest_singular_structured_dense(P, A, use_hessian)
 % Uses a dense mxnxp array P as storage for the perturbation basis
 % We assume (without checking) that this basis is orthogonal.
 
-n = size(A, 2);
-if isreal(A)
+n = size(P, 2);
+if isreal(A) && isreal(P)
     problem.M = spherefactory(n);
 else
     problem.M = spherecomplexfactory(n);
@@ -48,23 +48,42 @@ end
 % with precomputed fields that we need in other functions as well
 function store = populate_store(P, A, epsilon, y, v, store)
     if ~isfield(store, 'r')
+        if isscalar(y)  % in case we initialize with y = 0
+            y = ones(size(P,1), 1) * y;
+        end
         M = make_M(P, v);
-        [W, S, U] = svd(M', 0); %this form ensures U is always square
-        Av = A * v;
+        [W, S, U] = svd(M', 0); %this form ensures U is always square        
         store.M = M;
         store.U = U;
-        store.WS = W .* diag(S)';
-        store.Av = Av;
-        Utr = -U' * (Av + epsilon * y);
-        store.Utr = Utr;
         s = diag(S);
+        WS = W .* s';
+        store.WS = WS;
+        if isvector(A)
+            SWTalpha = store.WS' * A;
+            store.normAv = norm(SWTalpha);
+            Utr = -SWTalpha - U'*y*epsilon;
+        else
+            Av = A * v;
+            store.normAv = norm(Av);
+            Utr = -U' * (Av + y*epsilon);
+        end
+        store.Utr = Utr;
         store.s = s;
         s(end+1:length(U)) = 0;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;
         aux = d .* Utr;
         aux(isnan(aux)) = 0;
-        store.aux = aux;
+        z = U * aux;
+        delta =  WS * aux(1:size(WS,2));
+        if isvector(A)
+            AplusDelta = make_Delta(P, A+delta);
+        else
+            AplusDelta = A + make_Delta(P, delta);
+        end
+        store.z = z;
+        store.delta = delta;
+        store.AplusDelta = AplusDelta;
     end
 end
 
@@ -77,43 +96,37 @@ end
 
 function [eg, store] = egrad(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    aux = store.aux;
-    z = store.U * aux;
-    WS = store.WS;
-    delta =  WS * aux(1:size(WS,2));
-    Delta = make_Delta(P, delta);
-    eg = (A+Delta)' * z * (-2);
+    eg = store.AplusDelta' * store.z * (-2);
 end
 
-function [Delta, store] = minimizer(P, A, epsilon, y, v, store)
+function [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    aux = store.aux;
-    WS = store.WS;
-    delta =  WS * aux(1:size(WS,2));
-    Delta = make_Delta(P, delta);
+    Delta = make_Delta(P, store.delta);
+    AplusDelta = store.AplusDelta;
 end
 
 function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    aux = store.aux;
-    U = store.U;
-    z = U * aux;
-    WS = store.WS;
-    delta =  WS * aux(1:size(WS,2));
-    Delta = make_Delta(P, delta); % TODO: could cache more here
-    dM = make_M(P, w);
+    AplusDelta = store.AplusDelta;
+    z = store.z;
     d = store.d;
     M = store.M;
-    daux = -d .* (U' * (M*(dM'*z) + (A+Delta)*w));
+    U = store.U;
+    dM = make_M(P, w);
+    daux = -d .* (U' * (M*(dM'*z) + AplusDelta*w));
     dz = U * daux;
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
-    ehw = (dDelta' * z + (A+Delta)' * dz) * (-2);
+    ehw = (dDelta' * z + AplusDelta' * dz) * (-2);
 end
 
 function [prod, store] = constraint(P, A, epsilon, y, v, store)
-    [Delta, store] = minimizer(P, A, epsilon, y, v, store);
-    prod = store.Av + Delta * v;
+    [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, v, store);
+    if isvector(A)
+        prod = store.M * (A + store.delta);
+    else
+        prod = AplusDelta * v;
+    end
 end
 
 function v_reg = recover_exact(P, A, v, tol)

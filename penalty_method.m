@@ -28,7 +28,6 @@ function [x cost info] = penalty_method(problem, x0, options)
     else
         y = 0;
     end
-
     k = 0;
     while(true)
         k = k + 1;
@@ -39,7 +38,7 @@ function [x cost info] = penalty_method(problem, x0, options)
         
         [cons, store] = regproblem.constraint(x, struct());
         orig_cost = problem.cost(x, struct()); % we cannot reuse store because it's a different problem
-        relative_constraint_error = norm(cons) / norm(store.Av);
+        relative_constraint_error = norm(cons) / store.normAv;
         fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, relative constraint error: %e.\n", ...
             length(info), cost, orig_cost, relative_constraint_error);
 
