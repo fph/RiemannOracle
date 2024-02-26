@@ -1,4 +1,4 @@
-function [D0,D1,D2,e,t,V,infotable] = nearest_singular_polynomial(A0, A1, A2, maxiter, timemax, V0, eps_regs)
+function [D0,D1,D2,e,t,V,infotable] = nearest_singular_polynomial(A0, A1, A2, maxiter, timemax, V0)
 
 V0_r = V0;
 V0_l = V0;
@@ -12,9 +12,7 @@ M = zeros(m+2,3*n);
 W = zeros(size(V0) + [0,4]);
 W(:,3:end-2) = V0;
 
-for j=1:m+2
-    M(j,:) = [W(:,j+2).' W(:,j+1).' W(:,j).'];
-end
+M(1:m+2,:) = [W(:,3:m+4).' W(:,2:m+3).' W(:,1:m+2).'];
 
 eps_reg = 1;
 for i = 1:100
@@ -24,9 +22,7 @@ for i = 1:100
     W = zeros(size(V_r) + [0,4]);
     W(:,3:end-2) = V_r;
 
-    for j=1:m+2
-        M(j,:) = [W(:,j+2).' W(:,j+1).' W(:,j).'];
-    end
+    M(1:m+2,:) = [W(:,3:m+4).' W(:,2:m+3).' W(:,1:m+2).'];
     f = real(trace((A.')'*((M'/(M*M'+eps_reg*eye(m+2)))*(M*A.'))));
     
     while f > 2.5*e_r(end)^2
@@ -40,24 +36,20 @@ for i = 1:100
 end
 
 W(:,3:end-2) = V_r;
-for j=1:m+2
-    M(j,:) = [W(:,j+2).' W(:,j+1).' W(:,j).'];
-end
+M(1:m+2,:) = [W(:,3:m+4).' W(:,2:m+3).' W(:,1:m+2).'];
 
 
 A = [A0.' A1.' A2.'];
 eps_reg = 1;
 for i = 1:100
-    [D0_l,D1_l,D2_l,e_l,t_l,V_l,infotable_l] = nearest_polynomial_right_kernel(A0.', A1.', A2.', maxiter, timemax, V0_l, eps_regs(i));
+    [D0_l,D1_l,D2_l,e_l,t_l,V_l,infotable_l] = nearest_polynomial_right_kernel(A0.', A1.', A2.', maxiter, timemax, V0_l, eps_reg);
     V0_l = V_l;
 
     eps_reg = eps_reg*1e-2;
     W = zeros(size(V_l) + [0,4]);
     W(:,3:end-2) = V_l;
 
-    for j=1:m+2
-        M(j,:) = [W(:,j+2).' W(:,j+1).' W(:,j).'];
-    end
+    M(1:m+2,:) = [W(:,3:m+4).' W(:,2:m+3).' W(:,1:m+2).'];
     f = real(trace((A.')'*((M'/(M*M'+eps_reg*eye(m+2)))*(M*A.'))));
     
     while f > 2.5*e_l(end)^2
