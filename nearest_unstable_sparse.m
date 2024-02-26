@@ -43,6 +43,7 @@ function store = populate_store(structure, target, A, epsilon, y, v, store)
         store.d = d;
         store.lambda = lambda;
         store.r = lambda * v + r0;
+        store.normAv = norm(Av);        
     end
 end
 

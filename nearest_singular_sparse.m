@@ -45,6 +45,7 @@ function store = populate_store(structure, A, epsilon, y, v, store)
         d = 1./ (structure * (conj(v) .* v) + epsilon);
         d(~isfinite(d)) = 0;
         store.d = d;
+        store.normAv = norm(Av);       
     end    
 end
 

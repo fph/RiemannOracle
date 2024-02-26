@@ -42,6 +42,7 @@ options.y = 0;
 options.maxiter = 1000;
 options.verbose = 1;
 options.max_outer_iterations = 40;
+epsilon_decrease = 0.5;
 
 alpha = [p;q];
 problem = nearest_singular_structured_dense(P, alpha, true);

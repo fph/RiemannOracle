@@ -78,6 +78,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
         aux = d .* Utr;
         aux(isnan(aux)) = 0;
         store.aux = aux;
+        store.normAv = norm(Av);
     end
 end
 
