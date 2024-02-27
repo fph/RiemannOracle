@@ -39,10 +39,11 @@ A = [1/sqrt(degq-d+1) * polytoep(p, degq-d) ... % Sylvester matrix
 
 options = struct();
 options.y = 0;
-options.maxiter = 1000;
+options.maxiter = 500;
 options.verbose = 1;
 options.max_outer_iterations = 40;
 epsilon_decrease = 0.5;
+options.tolgradnorm = 1e-10;
 
 alpha = [p;q];
 problem = nearest_singular_structured_dense(P, alpha, true);
@@ -78,5 +79,5 @@ uu = x(1:degq-d+1);
 vv = x(degq-d+2:end);
 gg = polytoep(vv, d) \ pp;  % gg = deconv(pp, vv) but more stable
 
-nearness = norm([conv(gg,vv)-p conv(gg,-uu)-q])
+nearness = norm([conv(gg,vv)-p; conv(gg,-uu)-q])
 d
