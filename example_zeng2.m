@@ -6,6 +6,23 @@
 % sought gcd degree
 d = input('Degree of sought gcd? ');
 
+% this is a global multiplicative scaling of the problem that is sent to Manopt
+% we add this additional parameter to play around with, since it seems that
+% some of the inner tolerances are absolute and hence scaling-dependent.
+
+scaling = 1;
+
+% setting options
+options = struct();
+options.y = 0;
+options.maxiter = 200;
+options.verbosity = 1;
+options.max_outer_iterations = 40;
+options.epsilon_decrease = 0.5;
+options.starting_epsilon = 1 * scaling;
+options.tolgradnorm = 1e-12 * scaling;
+
+
 % create polynomials from the example
 p = 1;
 q = 1;
@@ -37,19 +54,11 @@ P = autobasis(fake_A);
 A = [1/sqrt(degq-d+1) * polytoep(p, degq-d) ... % Sylvester matrix
     1/sqrt(degp-d+1) * polytoep(q, degp-d)];
 
-options = struct();
-options.y = 0;
-options.maxiter = 500;
-options.verbose = 1;
-options.max_outer_iterations = 40;
-epsilon_decrease = 0.5;
-options.tolgradnorm = 1e-10;
-
 alpha = [p;q];
-problem = nearest_singular_structured_dense(P, alpha, true);
+problem = nearest_singular_structured_dense(P, scaling*alpha, true);
 [x cost info] = penalty_method(problem, [], options);
 
-Apert = A + info.Delta;
+Apert = A + 1/scaling * info.Delta;
 
 s = svd(Apert);
 nullity = sum(s < max(10*s(end), 1e-13 * s(1)));
