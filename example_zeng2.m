@@ -1,6 +1,7 @@
 %
-% Test 2 in Zeng, "The Numerical Greatest Common Divisor of Univariate
-% Polynomials"
+% Boito 8.1.1 / Zeng Test 2, in "Toward the best algorithm for 
+% approximate GCD of univariate polynomials", Kosaku Nagasaka,
+% https://doi.org/10.1016/j.jsc.2019.08.004
 %
 
 % sought gcd degree
