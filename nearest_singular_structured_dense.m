@@ -56,6 +56,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
         store.M = M;
         store.U = U;
         s = diag(S);
+        store.condM = max(s) / min(s);
         WS = W .* s';
         store.WS = WS;
         if isvector(A)
@@ -68,7 +69,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
             Utr = -U' * (Av + y*epsilon);
         end
         store.Utr = Utr;
-        store.s = s;
+        store.s = s;        
         s(end+1:length(U)) = 0;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;

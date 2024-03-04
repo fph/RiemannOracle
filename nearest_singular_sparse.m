@@ -42,10 +42,13 @@ function store = populate_store(structure, A, epsilon, y, v, store)
         Av = A * v;
         store.Av = Av;
         store.r = -Av - epsilon * y;
-        d = 1./ (structure * (conj(v) .* v) + epsilon);
+        s2 = structure * (conj(v) .* v);
+        d = 1./ (s2 + epsilon);
         d(~isfinite(d)) = 0;
         store.d = d;
-        store.normAv = norm(Av);       
+        % normAv and condM are needed by penalty_method for stats
+        store.normAv = norm(Av);
+        store.condM = sqrt(max(s2) / min(s2));
     end    
 end
 

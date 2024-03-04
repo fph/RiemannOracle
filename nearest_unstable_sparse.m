@@ -34,7 +34,8 @@ function store = populate_store(structure, target, A, epsilon, y, v, store)
     if ~isfield(store, 'r')
         Av = A * v;
         r0 = -Av - epsilon * y;
-        d = 1./ (structure * (conj(v) .* v) + epsilon);
+        s2 = structure * (conj(v) .* v);
+        d = 1./ (s2 + epsilon);
         d(~isfinite(d)) = 0;
         
         Dv = d .* v;
@@ -43,7 +44,9 @@ function store = populate_store(structure, target, A, epsilon, y, v, store)
         store.d = d;
         store.lambda = lambda;
         store.r = lambda * v + r0;
-        store.normAv = norm(Av);        
+        % normAv and condM are needed by penalty_method for stats
+        store.normAv = norm(Av);
+        store.condM = sqrt(max(s2) / min(s2));
     end
 end
 

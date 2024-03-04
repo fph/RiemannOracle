@@ -1,4 +1,4 @@
-function [x cost info] = penalty_method(problem, x0, options)
+function [x, cost, info] = penalty_method(problem, x0, options)
 % x = penalty_method(problem, x0, options)
 %
 % x0 may be empty, as with other Manopt functions.
@@ -15,6 +15,8 @@ function [x cost info] = penalty_method(problem, x0, options)
 % a numerical constant (default=0.5), 'f' for an adaptive decrease based on 
 % the function value, 'g' for a decrease based on the value of the gradient.
 %
+% Note for those implementing new problem structures:
+% This function accesses store.normAv and store.condM, which must exist.
 
     default.starting_epsilon = 1;
     default.epsilon_decrease = 0.5;
@@ -48,10 +50,11 @@ function [x cost info] = penalty_method(problem, x0, options)
         [cons, store] = regproblem.constraint(x, struct());
         orig_cost = problem.cost(x, struct()); % we cannot reuse store because it's a different problem
         relative_constraint_error = norm(cons) / store.normAv;
-        fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, relative constraint error: %e.\n", ...
-            length(info), cost, orig_cost, relative_constraint_error);
+        fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, cond(M) = %e, relative constraint error: %e.\n", ...
+            length(info), cost, orig_cost, store.condM, relative_constraint_error);
 
-        % we want to break out here so we return the y truly used
+        % we want to break out here so that we can return the y truly used
+        % before updates
         if relative_constraint_error < 1e-16 || k == options.max_outer_iterations
             break
         end
