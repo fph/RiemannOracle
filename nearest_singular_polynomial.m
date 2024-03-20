@@ -64,7 +64,7 @@ function store = populate_store(A, epsilon, y, V, store)
         store.d = dd;
 
         % normAv and condM are needed by penalty_method for stats
-        store.normAv = norm(Av);
+        store.normAv = norm(Av,'f');
         store.condM = max(s2) / min(s2);
     end    
 end
