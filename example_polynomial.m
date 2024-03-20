@@ -29,14 +29,14 @@ use_hessian = true;
 
 
 % Right kernel:
-problem = nearest_singular_polynomial(A, use_hessian);
+problem = nearest_singular_polynomial(A, [], use_hessian);
           
 [V_right,xcost,info_right] = penalty_method(problem, V0, options);
 
 % Left kernel:
 A = [A0.' A1.' A2.'];
 
-problem = nearest_singular_polynomial(A, use_hessian);
+problem = nearest_singular_polynomial(A, [], use_hessian);
           
 [V_left,xcost,info_left] = penalty_method(problem, V0, options);
 
