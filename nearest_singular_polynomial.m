@@ -41,9 +41,6 @@ problem = apply_regularization(problem, 0, 0);
 % fill values in the 'store', a caching structure used by Manopt
 % with precomputed fields that we need in other functions as well
 function store = populate_store(A, epsilon, y, V, store)
-    if norm(y) ~= 0
-        error('A nonzero value of y is not supported')
-    end
     if ~isfield(store, 'r')
         n = size(A, 1);
         d = size(V, 2) - 1;
@@ -72,7 +69,7 @@ end
 function [f, store] = cost(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     M = store.M;
-    f = real(trace((A.')'*((M'/(M*M'+epsilon*eye(k+d+1)))*(M*A.'))));
+    f = real(trace((M*A.'+epsilon*y.')'/(M*M'+epsilon*eye(m+2))*(M*A.'+epsilon*y.')));
 
 end
 
@@ -84,7 +81,7 @@ function [g, store] = egrad(A, epsilon, y, V, store)
     M_reg_inv = (M_reg^0) / M_reg;
     x = (M'/(M*M'+epsilon*eye(k+d+1)))*(M*A.');
     
-    grad_M = 2*(M_reg_inv*M*A.'*(A.'-x)');
+    grad_M = 2*(M_reg_inv*(M*A.'+epsilon*y.')*(A.'-x)');
     % TODO: works only for k=2
     g = (grad_M(1:m,1:n) + grad_M(2:m+1,n+1:2*n) + grad_M(3:m+2,2*n+1:3*n)).';
 
@@ -92,6 +89,9 @@ end
 
 
 function [H, store] = ehess(A, epsilon, y, V, dV, store)
+    if norm(y) ~= 0
+        error('A nonzero value of y is not supported')
+    end
     store = populate_store(A, epsilon, y, V, store);
         
     M = store.M;
@@ -120,7 +120,7 @@ function E = minimizer(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     M = store.M;
     
-    E = -(M'/(M*M'+epsilon*eye(d+k+1)))*(M*A.');
+    E = -(M'/(M*M'+epsilon*eye(d+k+1)))*(M*A.'+epsilon*y.');
     E = E.';
 
 end
