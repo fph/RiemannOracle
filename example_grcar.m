@@ -6,6 +6,10 @@
 
 n = 8;
 A = gallery('grcar', n);
+% A can be specified via coordinates in the basis P, for better stability.
+% TODO: this doesn't work because of thin-SVD dimension mismatches
+% A = [sqrt(n-1); sqrt(n); sqrt(n-1); sqrt(n-2); sqrt(n-3)];
+
 P = [];
 P(:,:,1) = diag(ones(n-1,1), -1);
 P(:,:,2) = diag(ones(n,1), 0);
@@ -23,9 +27,12 @@ problem = nearest_singular_structured_dense(P, A, true);
 % checkgradient(regproblem)
 % checkhessian(regproblem)
 
-options.outer_iterations = 30;
-[x cost info] = penalty_method(problem, [], options);
+options = struct();
+options.max_outer_iterations = 30;
+options.verbosity = 0;
+options.y = 0;
+[x, cost, info] = penalty_method(problem, [], options);
 regproblem = apply_regularization(problem, info.last_epsilon, info.y);
-[Delta store] = regproblem.minimizer(x, struct());
+[Delta, AplusDelta, store] = regproblem.minimizer(x, struct());
 
 fprintf('Cost: %e, sigma_min: %e\n', cost, min(svd(A+Delta)));
