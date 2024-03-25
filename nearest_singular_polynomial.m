@@ -79,7 +79,7 @@ function [g, store] = egrad(A, epsilon, y, V, store)
     
     M_reg = M*M'+epsilon*eye(k+d+1);
     M_reg_inv = (M_reg^0) / M_reg;
-    x = (M'/(M*M'+epsilon*eye(k+d+1)))*(M*A.');
+    x = (M'/(M*M'+epsilon*eye(k+d+1)))*(M*A.'+epsilon*y.');
     
     grad_M = 2*(M_reg_inv*(M*A.'+epsilon*y.')*(A.'-x)');
     % TODO: works only for k=2
@@ -128,7 +128,7 @@ end
 function [prod, store] = constraint(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     M = store.M;
-    E = -(M'/(M*M'+epsilon*eye(d+k+1)))*(M*A.');
+    E = -(M'/(M*M'+epsilon*eye(d+k+1)))*(M*A.'+epsilon*y.');
     E = E.';
 
     prod = (A + E)*M.';
