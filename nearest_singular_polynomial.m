@@ -69,8 +69,8 @@ end
 function [f, store] = cost(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     M = store.M;
-    f = real(trace((M*A.'+epsilon*y.')'/(M*M'+epsilon*eye(m+2))*(M*A.'+epsilon*y.')));
-
+    r = store.r;
+    f = real(trace(conj(r)/(M*M'+epsilon*eye(m+2))*r.'));
 end
 
 function [g, store] = egrad(A, epsilon, y, V, store)
@@ -79,19 +79,15 @@ function [g, store] = egrad(A, epsilon, y, V, store)
     
     M_reg = M*M'+epsilon*eye(k+d+1);
     M_reg_inv = (M_reg^0) / M_reg;
-    x = (M'/(M*M'+epsilon*eye(k+d+1)))*(M*A.'+epsilon*y.');
+    E = (M'/(M*M'+epsilon*eye(k+d+1)))*(store.r.');
     
-    grad_M = 2*(M_reg_inv*(M*A.'+epsilon*y.')*(A.'-x)');
+    grad_M = -2*(M_reg_inv*(store.r.')*(A.'+E)');
     % TODO: works only for k=2
     g = (grad_M(1:m,1:n) + grad_M(2:m+1,n+1:2*n) + grad_M(3:m+2,2*n+1:3*n)).';
-
 end
 
 
 function [H, store] = ehess(A, epsilon, y, V, dV, store)
-    if norm(y) ~= 0
-        error('A nonzero value of y is not supported')
-    end
     store = populate_store(A, epsilon, y, V, store);
         
     M = store.M;
@@ -104,11 +100,11 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     M_reg_inv = (M_reg^0) / M_reg;
     
     D_inv = - (M_reg_inv*(dM*M'+M*dM'))*M_reg_inv; 
-    E = (M'/(M*M'+epsilon*eye(d+k+1)))*(M*A.');
+    E = (M'/(M*M'+epsilon*eye(k+d+1)))*(store.r.');
        
-    term1 = D_inv*M*A.'*(A.'-E)';
-    term2 = M_reg_inv*dM*A.'*(A.'-E)';
-    term3 = - M_reg_inv*M*A.'*(dM'*M_reg_inv*M*A.' + M'*D_inv*M*A.' + M'*M_reg_inv*dM*A.')';
+    term1 = D_inv*(-store.r.')*(A.'+E)';
+    term2 = M_reg_inv*dM*A.'*(A.'+E)';
+    term3 = - M_reg_inv*(-store.r.')*(dM'*M_reg_inv*(-store.r.') + M'*D_inv*(-store.r.') + M'*M_reg_inv*dM*A.')';
 
     H_M = 2*(term1 + term2 + term3);
     % TODO: works only for k=2

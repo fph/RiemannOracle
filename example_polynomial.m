@@ -28,7 +28,7 @@ options.max_outer_iterations = 10;
 options.y = zeros(n,d+3);
 
 
-use_hessian = false;
+use_hessian = true;
 
 
 % Right kernel:
