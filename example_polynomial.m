@@ -17,15 +17,15 @@ d = size(V0, 2) - 1;
 A = [A0 A1 A2];
 
 options = struct();
-options.maxiter = 5000;
-options.maxtime = 4;
+options.maxiter = 500;
+% options.maxtime = 4;
 options.tolgradnorm = 1e-6;
 % options.debug=0;
 options.solver = @trustregions;
 options.verbosity = 1;
 % options.epsilon_decrease = 'f';
-options.max_outer_iterations = 10;
-options.y = zeros(n,d+3);
+options.max_outer_iterations = 30;
+options.y = 0;
 
 
 use_hessian = true;
