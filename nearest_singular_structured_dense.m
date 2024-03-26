@@ -47,14 +47,15 @@ end
 % fill values in the 'store', a caching structure used by Manopt
 % with precomputed fields that we need in other functions as well
 function store = populate_store(P, A, epsilon, y, v, store)
-    if ~isfield(store, 'r')
+    if ~isfield(store, 'cf')
         if isscalar(y)  % in case we initialize with y = 0
             y = ones(size(P,1), 1) * y;
         end
         M = make_M(P, v);
-        [W, S, U] = svd(M', 0); %this form ensures U is always square        
+        [U1, S, W] = svd(M, 'econ');
+        
         store.M = M;
-        store.U = U;
+        store.U1 = U1;
         s = diag(S);
         store.condM = max(s) / min(s);
         WS = W .* s';
@@ -62,21 +63,19 @@ function store = populate_store(P, A, epsilon, y, v, store)
         if isvector(A)
             SWTalpha = store.WS' * A;
             store.normAv = norm(SWTalpha);
-            Utr = -SWTalpha - U'*y*epsilon;
+            r1 = -y*epsilon;
+            r2 = -SWTalpha;
         else
             Av = A * v;
             store.normAv = norm(Av);
-            Utr = -U' * (Av + y*epsilon);
+            r1 = -Av - y*epsilon;
+            r2 = 0;
         end
-        store.Utr = Utr;
-        store.s = s;        
-        s(end+1:length(U)) = 0;
+        store.s = s;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;
-        aux = d .* Utr;
-        aux(isnan(aux)) = 0;
-        z = U * aux;
-        delta =  WS * aux(1:size(WS,2));
+        [z, aux, cf] = solve_system_svd(U1, d, epsilon, r1, r2);
+        delta =  WS * aux;
         if isvector(A)
             AplusDelta = make_Delta(P, A+delta);
         else
@@ -85,14 +84,13 @@ function store = populate_store(P, A, epsilon, y, v, store)
         store.z = z;
         store.delta = delta;
         store.AplusDelta = AplusDelta;
+        store.cf = cf;
     end
 end
 
 function [cf, store] = cost(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    d = store.d;
-    Utr = store.Utr;
-    cf = sum(conj(Utr) .* Utr .* d, 'omitnan'); % in this order we preserve realness, so we don't use aux
+    cf = store.cf;
 end
 
 function [eg, store] = egrad(P, A, epsilon, y, v, store)
@@ -110,12 +108,9 @@ function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     store = populate_store(P, A, epsilon, y, v, store);
     AplusDelta = store.AplusDelta;
     z = store.z;
-    d = store.d;
     M = store.M;
-    U = store.U;
     dM = make_M(P, w);
-    daux = -d .* (U' * (M*(dM'*z) + AplusDelta*w));
-    dz = U * daux;
+    dz = -solve_system_svd(store.U1, store.d, epsilon, AplusDelta*w, store.WS'*(dM'*z));
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
     ehw = (dDelta' * z + AplusDelta' * dz) * (-2);

@@ -1,11 +1,10 @@
 %
-% Nearest singular matrix to grcar(8) with the same structure
-% 
-% This is a tricky case since M is tall-thin and not all vectors v
-% are feasible.
+% Variant of example_grcar, in which A is given via basis coefficients.
+%
 
 n = 8;
-A = gallery('grcar', n);
+% A is given via coordinates in the basis P
+A = [-sqrt(n-1); sqrt(n); sqrt(n-1); sqrt(n-2); sqrt(n-3)];
 
 P = [];
 P(:,:,1) = diag(ones(n-1,1), -1);
@@ -32,4 +31,4 @@ options.y = 0;
 regproblem = apply_regularization(problem, info.last_epsilon, info.y);
 [Delta, AplusDelta, store] = regproblem.minimizer(x, struct());
 
-fprintf('Cost: %e, sigma_min: %e\n', cost, min(svd(A+Delta)));
+fprintf('Cost: %e, sigma_min: %e\n', cost, min(svd(AplusDelta)));
