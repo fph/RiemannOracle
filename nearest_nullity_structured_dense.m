@@ -44,7 +44,7 @@ problem.recover_exact = @(v, tol) recover_exact(P, A, v, tol);
 end
 
 function M = make_M(P, v)
-    [m n p] = size(P);
+    [m, ~, p] = size(P);
     [~, l] = size(v);
     M = zeros(m*l, p);
     for h = 1:l
@@ -60,79 +60,93 @@ end
 % fill values in the 'store', a caching structure used by Manopt
 % with precomputed fields that we need in other functions as well
 function store = populate_store(P, A, epsilon, y, v, store)
-    if ~isfield(store, 'r')
+    if ~isfield(store, 'cf')
+        if isscalar(y)  % in case we initialize with y = 0
+            [m, ~, ~] = size(P);
+            [~, l] = size(v);
+            y = ones(m, l) * y;
+        end
         M = make_M(P, v);
-        [W, S, U] = svd(M', 0); %this form ensures U is always square
-        Av = A * v;
+        [U1, S, W] = svd(M, 'econ');
+        
         store.M = M;
-        store.U = U;
+        store.U1 = U1;
         s = diag(S);
         store.condM = max(s) / min(s);
-        store.WS = W .* s';
-        store.Av = Av;
-        Utr = -U' * (Av(:) + epsilon * y(:));
-        store.Utr = Utr;
+        WS = W .* s';
+        store.WS = WS;
+        if isvector(A)
+            SWTalpha = store.WS' * A;
+            store.normAv = norm(SWTalpha);
+            r1 = -y*epsilon;
+            r2 = -SWTalpha;
+        else
+            Av = A * v;
+            store.normAv = norm(Av, 'fro');
+            r1 = -Av(:) - y(:)*epsilon;
+            r2 = 0;
+        end
         store.s = s;
-        s(end+1:length(U)) = 0;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;
-        aux = d .* Utr;
-        aux(isnan(aux)) = 0;
-        store.aux = aux;
-        store.normAv = norm(Av);
+        [z, aux, cf] = solve_system_svd(U1, d, epsilon, r1, r2);
+        delta =  WS * aux;
+        if isvector(A)
+            AplusDelta = make_Delta(P, A+delta);
+        else
+            AplusDelta = A + make_Delta(P, delta);
+        end
+        store.z = z;
+        store.delta = delta;
+        store.AplusDelta = AplusDelta;
+        store.cf = cf;
     end
 end
 
 function [cf, store] = cost(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    d = store.d;
-    Utr = store.Utr;
-    cf = sum(conj(Utr) .* Utr .* d, 'omitnan'); % in this order we preserve realness, so we don't use aux
+    cf = store.cf;
 end
 
 function [eg, store] = egrad(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    aux = store.aux;
-    z = store.U * aux;
-    WS = store.WS;
-    delta =  WS * aux(1:size(WS,2));
-    Delta = make_Delta(P, delta);
-    z = reshape(z, [size(P,1) size(v,2)]);
-    eg = (A+Delta)' * z * (-2);
+    [m, ~, ~] = size(P);
+    [~, l] = size(v);
+    z = reshape(store.z, [m, l]);
+    eg = store.AplusDelta' * z * (-2);
 end
 
-function [Delta, store] = minimizer(P, A, epsilon, y, v, store)
+function [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    aux = store.aux;
-    WS = store.WS;
-    delta =  WS * aux(1:size(WS,2));
-    Delta = make_Delta(P, delta);
+    Delta = make_Delta(P, store.delta);
+    AplusDelta = store.AplusDelta;
 end
 
 function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    aux = store.aux;
-    U = store.U;
-    z = U * aux;
-    WS = store.WS;
-    delta =  WS * aux(1:size(WS,2));
-    Delta = make_Delta(P, delta); % TODO: could cache more here
-    dM = make_M(P, w);
-    d = store.d;
+    AplusDelta = store.AplusDelta;
+    z = store.z;
     M = store.M;
-    ApDw = (A+Delta)*w;
-    daux = -d .* (U' * (M*(dM'*z) + ApDw(:)));
-    dz = U * daux;
+    dM = make_M(P, w);
+    r1 = AplusDelta*w;
+    r2 = store.WS'*(dM'*z);
+    dz = -solve_system_svd(store.U1, store.d, epsilon, r1(:), r2(:));
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
-    z = reshape(z, [size(P,1) size(v,2)]);
-    dz = reshape(dz, [size(P,1) size(v,2)]);
-    ehw = (dDelta' * z + (A+Delta)' * dz) * (-2);
+    [m, ~, ~] = size(P);
+    [~, l] = size(v);
+    z = reshape(z, [m, l]);
+    dz = reshape(dz, [m, l]);
+    ehw = (dDelta' * z + AplusDelta' * dz) * (-2);
 end
 
 function [prod, store] = constraint(P, A, epsilon, y, v, store)
-    [Delta, store] = minimizer(P, A, epsilon, y, v, store);
-    prod = store.Av + Delta * v;
+    [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, v, store);
+    if isvector(A)
+        prod = store.M * (A + store.delta);
+    else
+        prod = AplusDelta * v;
+    end
 end
 
 function v_reg = recover_exact(P, A, v, tol)
