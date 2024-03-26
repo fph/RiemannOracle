@@ -44,11 +44,8 @@ function store = populate_store(A, epsilon, y, V, store)
     if ~isfield(store, 'r')
         n = size(A, 1);
         d = size(V, 2) - 1;
-        M = zeros(k+d+1, (k+1)*n);
-        W = zeros(size(V) + [0,2*k]);
-        W(:,k+1:end-k) = V;
-        % TODO: works only for k=2
-        M(1:m+2,:) = [W(:,3:m+4).' W(:,2:m+3).' W(:,1:m+2).'];
+
+        M = polytoep(reshape(V,[1,n,d+1]), k);
         store.M = M;
 
         Av = A * M.';
@@ -70,7 +67,7 @@ function [f, store] = cost(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     M = store.M;
     r = store.r;
-    f = real(trace(conj(r)/(M*M'+epsilon*eye(m+2))*r.'));
+    f = real(trace(conj(r)/(M*M'+epsilon*eye(k+d+1))*r.'));
 end
 
 function [g, store] = egrad(A, epsilon, y, V, store)
@@ -91,10 +88,7 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     store = populate_store(A, epsilon, y, V, store);
         
     M = store.M;
-    dW = zeros(size(V) + [0,2*k]);
-    dW(:,k+1:end-k) = dV;
-    % TODO: works only for k=2
-    dM(1:m+2,:) = [dW(:,3:m+4).' dW(:,2:m+3).' dW(:,1:m+2).'];
+    dM = polytoep(reshape(dV,[1,n,d+1]), k);
 
     M_reg = M*M'+epsilon*eye(d+k+1);
     M_reg_inv = (M_reg^0) / M_reg;
@@ -109,7 +103,6 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     H_M = 2*(term1 + term2 + term3);
     % TODO: works only for k=2
     H = (H_M(1:m,1:n) + H_M(2:m+1,n+1:2*n) + H_M(3:m+2,2*n+1:3*n)).';
-
 end
 
 function E = minimizer(A, epsilon, y, V, store)
