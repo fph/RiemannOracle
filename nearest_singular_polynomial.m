@@ -77,13 +77,9 @@ end
 function [g, store] = egrad(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     M = store.M;
-    r = store.r;
-    
-    M_reg = M*M'+epsilon*eye(k+d+1);
-    M_reg_inv = (M_reg^0) / M_reg;
     delta = store.delta;
     
-    grad_M = -2*(M_reg_inv*r*(A.'+delta)');
+    grad_M = -2*(store.z*(A.'+delta)');
     % TODO: works only for k=2
     g = (grad_M(1:m,1:n) + grad_M(2:m+1,n+1:2*n) + grad_M(3:m+2,2*n+1:3*n)).';
 end
@@ -94,6 +90,7 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
         
     M = store.M;
     r = store.r;
+    z = store.z;
     dM = polytoep(reshape(dV,[1,n,d+1]), k);
 
     M_reg = M*M'+epsilon*eye(d+k+1);
@@ -104,7 +101,7 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     
     term1 = D_inv*(-r)*(A.'+delta)';
     term2 = M_reg_inv*dM*A.'*(A.'+delta)';
-    term3 = - M_reg_inv*(-r)*(dM'*M_reg_inv*(-r) + M'*D_inv*(-r) + M'*M_reg_inv*dM*A.')';
+    term3 = z*(-dM'*z + M'*D_inv*(-r) + M'*M_reg_inv*dM*A.')';
 
     H_M = 2*(term1 + term2 + term3);
     % TODO: works only for k=2
