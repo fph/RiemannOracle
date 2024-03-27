@@ -52,8 +52,9 @@ function store = populate_store(A, epsilon, y, V, store)
         % for this problem, the vector alpha such that T(A)v = M*alpha 
         % and T(A) = sum_i P(:,:,i)*alpha_i  is
         % precisely A.', up to reshaping, hence many transformations 
-        % between matrices and their basis representation reduce to transpositions.
-        % for instance, Delta (as a polynomial) is delta.'.
+        % between matrices and their basis representation reduce to transpositions + reshaping.
+        % for instance, Delta (as a polynomial) is delta.',
+        % and T(A)*v = vec(transpose(M * A.')).
 
         TAv = M * A.';
         

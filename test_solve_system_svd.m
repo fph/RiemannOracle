@@ -1,4 +1,4 @@
-% unit test for solve_system_svd
+% unit tests for solve_system_svd
 import matlab.unittest.TestCase
 import matlab.unittest.constraints.IsEqualTo
 import matlab.unittest.constraints.RelativeTolerance
