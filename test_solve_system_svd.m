@@ -3,6 +3,8 @@ import matlab.unittest.TestCase
 import matlab.unittest.constraints.IsEqualTo
 import matlab.unittest.constraints.RelativeTolerance
 
+testCase = TestCase.forInteractiveUse;
+
 % tall-thin case
 
 rng(0);
@@ -15,8 +17,6 @@ d = 1 ./ (diag(S).^2 + epsilon);
 r1 = randn(m, 1);
 r2 = randn(size(U1,2), 1);
 [x, U1tx, cf] = solve_system_svd(U1, d, epsilon, r1, r2);
-
-testCase = TestCase.forInteractiveUse;
 
 testCase.verifyThat((M*M'+epsilon*eye(m))*x, IsEqualTo(r1 + U1*r2, ...
     "Within", RelativeTolerance(sqrt(eps))));
@@ -41,8 +41,6 @@ d = 1 ./ (diag(S).^2 + epsilon);
 r1 = randn(m, 1);
 r2 = randn(size(U1,2), 1);
 [x, U1tx, cf] = solve_system_svd(U1, d, epsilon, r1, r2);
-
-testCase = TestCase.forInteractiveUse;
 
 testCase.verifyThat((M*M'+epsilon*eye(m))*x, IsEqualTo(r1 + U1*r2, ...
     "Within", RelativeTolerance(sqrt(eps))));

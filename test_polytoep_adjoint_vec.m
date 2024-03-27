@@ -3,6 +3,8 @@ import matlab.unittest.TestCase
 import matlab.unittest.constraints.IsEqualTo
 import matlab.unittest.constraints.RelativeTolerance
 
+testCase = TestCase.forInteractiveUse;
+
 rng(0);
 m = 3;
 n = 2;
