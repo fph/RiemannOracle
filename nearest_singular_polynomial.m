@@ -47,21 +47,23 @@ function store = populate_store(A, epsilon, y, V, store)
 
         M = polytoep(reshape(V,[1,n,d+1]), k);
         store.M = M;
+        % we work implicitly with T(A) = polytoep(A, d)
 
-        % for this problem, the vector alpha such that T(A)v = M*alpha is
-        % precisely A.', hence many transformations between matrices and their
-        % basis representation reduce to transpositions.
+        % for this problem, the vector alpha such that T(A)v = M*alpha 
+        % and T(A) = sum_i P(:,:,i)*alpha_i  is
+        % precisely A.', up to reshaping, hence many transformations 
+        % between matrices and their basis representation reduce to transpositions.
+        % for instance, Delta (as a polynomial) is delta.'.
 
-        Av = M * A.';
-        store.Av = Av;
+        TAv = M * A.';
         
-        r = -Av - epsilon * y;
+        r = -TAv - epsilon * y;
         z = (M*M'+epsilon*eye(k+d+1)) \ r;
         delta = M' * z;
        
         s2 = svd(M);
         % normAv and condM are needed by penalty_method for stats
-        store.normAv = norm(Av,'f');
+        store.normAv = norm(TAv,'f');
         store.condM = max(s2) / min(s2);
         store.r = r;
         store.z = z;
@@ -76,7 +78,6 @@ end
 
 function [g, store] = egrad(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
-    M = store.M;
     delta = store.delta;
     
     grad_M = -2*(store.z*(A.'+delta)');
@@ -87,7 +88,7 @@ end
 
 function [H, store] = ehess(A, epsilon, y, V, dV, store)
     store = populate_store(A, epsilon, y, V, store);
-        
+
     M = store.M;
     r = store.r;
     z = store.z;
@@ -111,7 +112,6 @@ end
 function Delta = minimizer(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     Delta = store.delta.';
-
 end
 
 function [prod, store] = constraint(A, epsilon, y, V, store)
