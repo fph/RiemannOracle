@@ -81,9 +81,8 @@ function [g, store] = egrad(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     delta = store.delta;
     
-    grad_M = -2*(store.z*(A.'+delta)');
-    % TODO: works only for k=2
-    g = (grad_M(1:m,1:n) + grad_M(2:m+1,n+1:2*n) + grad_M(3:m+2,2*n+1:3*n)).';
+    g = polytoep_adjoint_vec(reshape(A+delta.',[n,n,k+1]), d, -2*transpose(store.z));
+    g = reshape(g, [n,d+1]);
 end
 
 
@@ -100,14 +99,13 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     
     D_inv = - (M_reg_inv*(dM*M'+M*dM'))*M_reg_inv; 
     delta = store.delta;
+    dz = D_inv*r - M_reg_inv*dM*A.';
+    ddelta = dM'*z + M'*dz;
     
-    term1 = D_inv*(-r)*(A.'+delta)';
-    term2 = M_reg_inv*dM*A.'*(A.'+delta)';
-    term3 = z*(-dM'*z + M'*D_inv*(-r) + M'*M_reg_inv*dM*A.')';
-
-    H_M = 2*(term1 + term2 + term3);
-    % TODO: works only for k=2
-    H = (H_M(1:m,1:n) + H_M(2:m+1,n+1:2*n) + H_M(3:m+2,2*n+1:3*n)).';
+    t1 = polytoep_adjoint_vec(reshape(A+delta.',[n,n,k+1]), d, transpose(dz));
+    t2 = polytoep_adjoint_vec(reshape(ddelta.',[n,n,k+1]), d, transpose(z));
+    H = -2*(t1 + t2);
+    H = reshape(H, [n,d+1]);
 end
 
 function Delta = minimizer(A, epsilon, y, V, store)
