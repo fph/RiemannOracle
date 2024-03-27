@@ -4,14 +4,19 @@ function problem = nearest_singular_polynomial(A, d, use_hessian)
 % A = [A0 A1 A2] is given as input.
 % The augmented Lagrangian method (y~=0) is not supported for now
 
-k = 2; % hardcoded for now
-n = size(A,1);
+if ismatrix(A)
+    [m, nkplus1] = size(A);
+    n = m;
+    k = nkplus1 / n - 1;
+else % preliminary support for rectangular matrix polynomials; still to complete
+    [m, n, kp1] = size(A);
+    k = kplus1 - 1;
+    A = reshape(A, m, n*kp1);
+end
 
 if not(exist('d', 'var')) || isempty(d)
     d = floor((k*(n-1))/2);
 end
-
-m = d+1;
 
 if isreal(A)
     problem.M = spherefactory(n, d+1);

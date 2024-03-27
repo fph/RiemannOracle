@@ -3,16 +3,17 @@ clear all;
 
 rng(5)
 m = 8;
+k = 2;
 A0 = randn(m) + 1i*randn(m);
 A1 = randn(m) + 1i*randn(m);
 A2 = randn(m) + 1i*randn(m);
 
 n = length(A1);
 
-V0 = randn(n,floor((2*(n-1))/2)+1);
-V0 = V0./norm(V0,'f');
+d = floor((k*(n-1))/2);
 
-d = size(V0, 2) - 1;
+V0 = randn(n,d+1);
+V0 = V0./norm(V0,'f');
 
 A = [A0 A1 A2];
 
@@ -32,18 +33,17 @@ use_hessian = true;
 
 
 % Right kernel:
-problem = nearest_singular_polynomial(A, [], use_hessian);
+problem = nearest_singular_polynomial(A, d, use_hessian);
           
 [V_right,~,info_right] = penalty_method(problem, V0, options);
 
 % Left kernel:
 A = [A0.' A1.' A2.'];
 
-problem = nearest_singular_polynomial(A, [], use_hessian);
+problem = nearest_singular_polynomial(A, d, use_hessian);
           
 [V_left,~,info_left] = penalty_method(problem, V0, options);
 
 % Choose the smaller one
 norm(info_left.Delta,'fro')
 norm(info_right.Delta,'fro')
-
