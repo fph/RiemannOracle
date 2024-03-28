@@ -74,8 +74,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
         store.s = s;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;
-        [z, aux, cf] = solve_system_svd(U1, d, epsilon, r1, r2);
-        delta =  WS * aux;
+        [z, delta, cf] = solve_system_svd(U1, WS, d, epsilon, r1, r2);       
         if isvector(A)
             AplusDelta = make_Delta(P, A+delta);
         else
@@ -109,8 +108,9 @@ function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     AplusDelta = store.AplusDelta;
     z = store.z;
     M = store.M;
+    WS = store.WS;
     dM = make_M(P, w);
-    dz = -solve_system_svd(store.U1, store.d, epsilon, AplusDelta*w, store.WS'*(dM'*z));
+    dz = -solve_system_svd(store.U1, WS, store.d, epsilon, AplusDelta*w, WS'*(dM'*z));
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
     ehw = (dDelta' * z + AplusDelta' * dz) * (-2);

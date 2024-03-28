@@ -7,11 +7,8 @@ function problem = nearest_nullity_structured_dense(P, A, l, use_hessian)
 % TODO: there is a lot of duplication with nearest_sparse_structured_dense
 % (which is essentially the case l=1), we should refactor to fix it.
 
-% we shall keep the notation v even if it is a matrix here, to be consistent
+% we keep the notation v even if it is a matrix here, to be consistent
 % with the other files.
-
-% TODO: our choice of having U always be square might not be ideal here,
-% since n*l might be larger than p.
 
 n = size(A, 2);
 if isreal(A)
@@ -89,8 +86,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
         store.s = s;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;
-        [z, aux, cf] = solve_system_svd(U1, d, epsilon, r1, r2);
-        delta =  WS * aux;
+        [z, delta, cf] = solve_system_svd(U1, store.WS, d, epsilon, r1, r2);
         if isvector(A)
             AplusDelta = make_Delta(P, A+delta);
         else
@@ -127,10 +123,11 @@ function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     AplusDelta = store.AplusDelta;
     z = store.z;
     M = store.M;
+    WS = store.WS;
     dM = make_M(P, w);
     r1 = AplusDelta*w;
-    r2 = store.WS'*(dM'*z);
-    dz = -solve_system_svd(store.U1, store.d, epsilon, r1(:), r2(:));
+    r2 = WS'*(dM'*z);
+    dz = -solve_system_svd(store.U1, WS, store.d, epsilon, r1(:), r2(:));
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
     [m, ~, ~] = size(P);

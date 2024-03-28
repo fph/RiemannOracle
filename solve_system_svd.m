@@ -1,11 +1,11 @@
-function [z, U1tz, cf] = solve_system_svd(U1, d, epsilon, r1, r2)
+function [z, delta, cf] = solve_system_svd(U1, VS, d, epsilon, r1, r2)
 % solve a linear system (M*M'+epsilon*I) z = r
 %
-% Input: U1, s from the (possibly thin) SVD of M, 
+% Input: U1, V*S from the (possibly thin) SVD of M, 
 % and the precomputed d = 1 ./ (s^2+epsilon).
 % r1, r2 such that r = (r1 + U1*r2)
 %
-% Return z, U1'*z, and also r'*(MM'+epsilon*I)^{-1}r, which 
+% Return z, M'*z, and also r'*(MM'+epsilon*I)^{-1}r, which 
 % are cheap to compute and are useful, too, sometimes.
 
 % relies on the expansion x = U1*diag(D)*U1'*r + U2*1/epsilon*I*U2'*r
@@ -25,6 +25,9 @@ if norm(orthogonal_part) == 0 && epsilon == 0
     epsilon = 1; % avoid NaNs
 end
 z = U1*U1tz + orthogonal_part/epsilon;
+if nargout > 1
+    delta = VS * U1tz;
+end
 if nargout > 2
     cf = real(U1tr'*U1tz) + norm(orthogonal_part)^2/epsilon;
 end
