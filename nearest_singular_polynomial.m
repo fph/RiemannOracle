@@ -118,18 +118,21 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     store = populate_store(A, epsilon, y, V, store);
 
     M = store.M;
-    r = store.r;
     z = store.z;
-    dM = polytoep(reshape(dV,[1,n,d+1]), k);
-
-    M_reg = M*M'+epsilon*eye(d+k+1);
-    M_reg_inv = (M_reg^0) / M_reg;
-    
-    D_inv = - (M_reg_inv*(dM*M'+M*dM'))*M_reg_inv; 
     delta = store.delta;
-    dz = D_inv*r - M_reg_inv*dM*A.';
+    WS = store.WS;
+    dM = polytoep(reshape(dV,[1,n,d+1]), k);
+    r1 = dM * (A.'+delta);
+    r2 = WS' * (dM'*z);
+    dz = -solve_system_svd(store.U1, WS, store.d, epsilon, r1, r2);
+
+%    alternative formulas:   
+%    M_reg = M*M'+epsilon*eye(d+k+1);
+%    M_reg_inv = (M_reg^0) / M_reg;   
+%    D_inv = - (M_reg_inv*(dM*M'+M*dM'))*M_reg_inv; 
+%    dz = D_inv*store.r - M_reg_inv*dM*A.';
+
     ddelta = dM'*z + M'*dz;
-    
     t1 = polytoep_adjoint_vec(reshape(A+delta.',[m,n,k+1]), d, transpose(dz));
     t2 = polytoep_adjoint_vec(reshape(ddelta.',[m,n,k+1]), d, transpose(z));
     H = -2*(t1 + t2);
