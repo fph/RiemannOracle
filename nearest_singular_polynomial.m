@@ -53,8 +53,20 @@ function store = populate_store(A, epsilon, y, V, store)
     if ~isfield(store, 'r')
         d = size(V, 2) - 1;
 
+        if isscalar(y)  % in case we initialize with y = 0
+            y = ones(k+d+1, m) * y;
+        end
+
+        % This M is actually the matrix such the real M is kron(M,I)
         M = polytoep(reshape(V,[1,n,d+1]), k);
+        [U1, S, W] = svd(M, 'econ');
+        
         store.M = M;
+        store.U1 = U1;
+        s = diag(S);
+        WS = W .* s';
+        store.WS = WS;
+
         % we work implicitly with T(A) = polytoep(A, d)
 
         % for this problem, the vector alpha such that T(A)v = M*alpha 
@@ -64,25 +76,33 @@ function store = populate_store(A, epsilon, y, V, store)
         % for instance, Delta (as a polynomial) is delta.',
         % and T(A)*v = vec(transpose(M * A.')).
 
-        TAv = M * A.';
-        
+        r1 = -epsilon * y;
+        r2 = -WS' * (A.'); % = -U1' * (T(A)*v) = -U1' * M * (A.')
+        % alternative formulas:
+        TAv = M * (A.');
         r = -TAv - epsilon * y;
-        z = (M*M'+epsilon*eye(k+d+1)) \ r;
-        delta = M' * z;
-       
-        s2 = svd(M);
-        % normAv and condM are needed by penalty_method for stats
-        store.normAv = norm(TAv,'f');
-        store.condM = max(s2) / min(s2);
         store.r = r;
+
+        dg = 1 ./ (s.^2 + epsilon);
+        store.d = dg;
+        [z, delta, cf] = solve_system_svd(U1, WS, dg, epsilon, r1, r2);
+        % alternative formulas:
+        % z = (M*M'+epsilon*eye(k+d+1)) \ r;
+        % delta = M' * z;
+       
+        % normAv and condM are needed by penalty_method for stats
+        store.normAv = norm(r2,'f');
+        store.condM = max(s) / min(s);
         store.z = z;
         store.delta = delta;
+        store.cf = cf;
     end    
 end
 
 function [f, store] = cost(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
-    f = real(trace(store.r'*store.z));
+    f = store.cf;
+    % f = real(sum(sum(conj(store.r) .* store.z)));  % = real(trace(r'*z))
 end
 
 function [g, store] = egrad(A, epsilon, y, V, store)

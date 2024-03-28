@@ -29,5 +29,7 @@ if nargout > 1
     delta = VS * U1tz;
 end
 if nargout > 2
-    cf = real(U1tr'*U1tz) + norm(orthogonal_part)^2/epsilon;
+    % U1tr'*U1tz, but working also for multiple right-hand sides as the
+    % trace product
+    cf = real(sum(sum(conj(U1tr).*U1tz))) + norm(orthogonal_part, 'fro')^2/epsilon;
 end

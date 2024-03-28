@@ -74,7 +74,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
         store.s = s;
         d = 1 ./ (s.^2 + epsilon);
         store.d = d;
-        [z, delta, cf] = solve_system_svd(U1, WS, d, epsilon, r1, r2);       
+        [z, delta, cf] = solve_system_svd(U1, WS, d, epsilon, r1, r2);
         if isvector(A)
             AplusDelta = make_Delta(P, A+delta);
         else
