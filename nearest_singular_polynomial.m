@@ -1,21 +1,25 @@
 function problem = nearest_singular_polynomial(A, d, use_hessian)
-% Nearest matrix polynomial with a right kernel of degree at most d
-% For the moment it works only for degree(A) k=2.
-% A = [A0 A1 A2] is given as input.
-% The augmented Lagrangian method (y~=0) is not supported for now
+% Nearest matrix polynomial with a right kernel of degree at most d.
+% 
+% The input A can either be in the form of a m x n x (k+1) array, 
+% or as A = [A0 A1 A2 ... Ak] (only for square polynomials, m=n)
+% 
+% k = degree(A), and the leading term is in Ak or A(:,:,k+1).
 
 if ismatrix(A)
     [m, nkplus1] = size(A);
     n = m;
     k = nkplus1 / n - 1;
-else % preliminary support for rectangular matrix polynomials; still to complete
-    [m, n, kp1] = size(A);
+else % preliminary support for rectangular matrix polynomials, given as a mxnx(k+1) array
+    [m, n, kplus1] = size(A);
     k = kplus1 - 1;
-    A = reshape(A, m, n*kp1);
+    A = reshape(A, m, n*kplus1);
 end
 
 if not(exist('d', 'var')) || isempty(d)
-    d = floor((k*(n-1))/2);
+    % this is a sensible default, but for a square polynomial, it is better to 
+    % solve two problems for the left and right kernel and degree floor(k(n-1)/2).
+    d = k*(n-1);
 end
 
 if isreal(A)
@@ -47,7 +51,6 @@ problem = apply_regularization(problem, 0, 0);
 % with precomputed fields that we need in other functions as well
 function store = populate_store(A, epsilon, y, V, store)
     if ~isfield(store, 'r')
-        n = size(A, 1);
         d = size(V, 2) - 1;
 
         M = polytoep(reshape(V,[1,n,d+1]), k);
@@ -86,7 +89,7 @@ function [g, store] = egrad(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     delta = store.delta;
     
-    g = polytoep_adjoint_vec(reshape(A+delta.',[n,n,k+1]), d, -2*transpose(store.z));
+    g = polytoep_adjoint_vec(reshape(A+delta.',[m,n,k+1]), d, -2*transpose(store.z));
     g = reshape(g, [n,d+1]);
 end
 
@@ -107,8 +110,8 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
     dz = D_inv*r - M_reg_inv*dM*A.';
     ddelta = dM'*z + M'*dz;
     
-    t1 = polytoep_adjoint_vec(reshape(A+delta.',[n,n,k+1]), d, transpose(dz));
-    t2 = polytoep_adjoint_vec(reshape(ddelta.',[n,n,k+1]), d, transpose(z));
+    t1 = polytoep_adjoint_vec(reshape(A+delta.',[m,n,k+1]), d, transpose(dz));
+    t2 = polytoep_adjoint_vec(reshape(ddelta.',[m,n,k+1]), d, transpose(z));
     H = -2*(t1 + t2);
     H = reshape(H, [n,d+1]);
 end
