@@ -50,9 +50,7 @@ problem = apply_regularization(problem, 0, 0);
 % fill values in the 'store', a caching structure used by Manopt
 % with precomputed fields that we need in other functions as well
 function store = populate_store(A, epsilon, y, V, store)
-    if ~isfield(store, 'r')
-        d = size(V, 2) - 1;
-
+    if ~isfield(store, 'cf')
         if isscalar(y)  % in case we initialize with y = 0
             y = ones(k+d+1, m) * y;
         end
@@ -79,9 +77,9 @@ function store = populate_store(A, epsilon, y, V, store)
         r1 = -epsilon * y;
         r2 = -WS' * (A.'); % = -U1' * (T(A)*v) = -U1' * M * (A.')
         % alternative formulas:
-        TAv = M * (A.');
-        r = -TAv - epsilon * y;
-        store.r = r;
+        % TAv = M * (A.');
+        % r = -TAv - epsilon * y;
+        % store.r = r;
 
         dg = 1 ./ (s.^2 + epsilon);
         store.d = dg;
@@ -95,6 +93,8 @@ function store = populate_store(A, epsilon, y, V, store)
         store.condM = max(s) / min(s);
         store.z = z;
         store.delta = delta;
+        store.AplusDelta = A + delta.';
+        store.AplusDeltaTranspose = (store.AplusDelta).'; % we store both to save a transposition later
         store.cf = cf;
     end    
 end
@@ -102,14 +102,14 @@ end
 function [f, store] = cost(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     f = store.cf;
+    % alternative formulas:
     % f = real(sum(sum(conj(store.r) .* store.z)));  % = real(trace(r'*z))
 end
 
 function [g, store] = egrad(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
-    delta = store.delta;
-    
-    g = polytoep_adjoint_vec(reshape(A+delta.',[m,n,k+1]), d, -2*transpose(store.z));
+
+    g = polytoep_adjoint_vec(reshape(store.AplusDelta,[m,n,k+1]), d, -2*transpose(store.z));
     g = reshape(g, [n,d+1]);
 end
 
@@ -119,36 +119,34 @@ function [H, store] = ehess(A, epsilon, y, V, dV, store)
 
     M = store.M;
     z = store.z;
-    delta = store.delta;
     WS = store.WS;
     dM = polytoep(reshape(dV,[1,n,d+1]), k);
-    r1 = dM * (A.'+delta);
+    r1 = dM * store.AplusDeltaTranspose;
     r2 = WS' * (dM'*z);
     dz = -solve_system_svd(store.U1, WS, store.d, epsilon, r1, r2);
 
-%    alternative formulas:   
+%    alternative formulas:
 %    M_reg = M*M'+epsilon*eye(d+k+1);
 %    M_reg_inv = (M_reg^0) / M_reg;   
 %    D_inv = - (M_reg_inv*(dM*M'+M*dM'))*M_reg_inv; 
 %    dz = D_inv*store.r - M_reg_inv*dM*A.';
 
     ddelta = dM'*z + M'*dz;
-    t1 = polytoep_adjoint_vec(reshape(A+delta.',[m,n,k+1]), d, transpose(dz));
+    t1 = polytoep_adjoint_vec(reshape(store.AplusDelta,[m,n,k+1]), d, transpose(dz));
     t2 = polytoep_adjoint_vec(reshape(ddelta.',[m,n,k+1]), d, transpose(z));
     H = -2*(t1 + t2);
     H = reshape(H, [n,d+1]);
 end
 
-function Delta = minimizer(A, epsilon, y, V, store)
+function [Delta, AplusDelta, store] = minimizer(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
     Delta = store.delta.';
+    AplusDelta = store.AplusDelta;
 end
 
 function [prod, store] = constraint(A, epsilon, y, V, store)
     store = populate_store(A, epsilon, y, V, store);
-    M = store.M;
-    Delta = store.delta.';
-    prod = M * (A + Delta).';
+    prod = store.M * store.AplusDeltaTranspose;
 end
 
 % function E = recover_exact(A, V, tol)
