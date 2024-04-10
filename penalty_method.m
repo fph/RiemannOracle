@@ -55,8 +55,12 @@ function [x, cost, info] = penalty_method(problem, x0, options)
 
         % we want to break out here so that we can return the y truly used
         % before updates
-        if relative_constraint_error < 1e-16 || k == options.max_outer_iterations
-            break
+        % if relative_constraint_error < 1e-16 || k == options.max_outer_iterations
+        %     break
+        % end
+        
+        if norm(cons) < options.stopping_criterion || k == options.max_outer_iterations
+                    break
         end
 
         if not(isempty(options.y))
