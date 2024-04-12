@@ -25,8 +25,8 @@ options.max_outer_iterations = 800;
 use_hessian = true;
 
 
-list_sizes = [5 10 15 20];
-n_sample = 1;
+list_sizes = [5 10 15 20 25];
+n_sample = 100;
 
 d_riemann = zeros(list_sizes(end), n_sample);
 d_bora = zeros(list_sizes(end), n_sample);
@@ -89,12 +89,56 @@ for m = list_sizes
 end
 
 
-% d_riemann = d_riemann(list_sizes, :);
-% d_bora = d_bora(list_sizes, :);
+% Total time spent (in minutes)
+(sum(t_bora,'all') + sum(t_riemann,'all')) / 60
+
+% d_riemann_av = mean(d_riemann(list_sizes, :),2);
+% d_bora_av = mean(d_bora(list_sizes, :),2);
+
+% t_riemann_av = mean(t_riemann(list_sizes, :),2);
+% t_bora_av = mean(t_bora(list_sizes, :),2); 
+
+d_means = [mean(d_riemann(list_sizes, :),2) mean(d_bora(list_sizes, :),2)];
+d_medians = [median(d_riemann(list_sizes, :),2) median(d_bora(list_sizes, :),2)];
+
+t_means = [mean(t_riemann(list_sizes, :),2) mean(t_bora(list_sizes, :),2)];
+t_medians = [median(t_riemann(list_sizes, :),2) median(t_bora(list_sizes, :),2)];
+
+
+% figure;
+% plot(list_sizes,d_medians,'--x')
+% xlabel('size (n)','FontSize',14)
+% ylabel('distance','FontSize',14)
+% h = legend('Oracle (median)','Das-Bora (median)');
+% set(h, 'Location', 'NorthWest')
 % 
-% t_riemann = t_riemann(list_sizes, :);
-% t_bora = t_bora(list_sizes, :); 
+% 
+% figure;
+% plot(list_sizes,d_means,'--x')
+% % extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
+% xlabel('size (n)','FontSize',14)
+% ylabel('distance','FontSize',14)
+% h = legend('Oracle (mean)','Das-Bora (mean)');
+% set(h, 'Location', 'NorthWest')
+% 
+% figure;
+% plot(list_sizes,t_medians,'--x')
+% xlabel('size (n)','FontSize',14)
+% ylabel('time (s)','FontSize',14)
+% h = legend('Oracle (median)','Das-Bora (median)');
+% set(h, 'Location', 'NorthWest')
+% 
+% figure;
+% plot(list_sizes,t_means,'--x')
+% % extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
+% xlabel('size (n)','FontSize',14)
+% ylabel('time (s)','FontSize',14)
+% h = legend('Oracle (mean)','Das-Bora (mean)');
+% set(h, 'Location', 'NorthWest')
 
 
-% save(['bora_','sizes5to20'])
+
+
+
+% save(['bora_','sizes5to25'])
 
