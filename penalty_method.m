@@ -1,4 +1,4 @@
-function [x, cost, info] = penalty_method(problem, x0, options)
+function [x, cost, info, results] = penalty_method(problem, x0, options)
 % x = penalty_method(problem, x0, options)
 %
 % x0 may be empty, as with other Manopt functions.
@@ -40,18 +40,35 @@ function [x, cost, info] = penalty_method(problem, x0, options)
         y = 0;
     end
     k = 0;
+    results = table();
+    saved_warning_state = warning();
+    warning('off', 'MATLAB:table:RowsAddedExistingVars'); % to fill the table more easily
+
     while(true)
-        k = k + 1;
+        k = k + 1;        
         regproblem = apply_regularization(problem, epsilon, y);
         
         fprintf("Solving: outer iter=%d, epsilon=%e, norm(y)=%e...\n", k, epsilon, norm(y));
         [x, cost, info] = manoptsolve(regproblem, x, options);
+
+        results.iteration(k) = k;
+        results.epsilon(k) = epsilon;
+        results.minfeps(k) = cost;
+        results.normy(k) = norm(y);
         
         [cons, store] = regproblem.constraint(x, struct());
         orig_cost = problem.cost(x, struct()); % we cannot reuse store because it's a different problem
         relative_constraint_error = norm(cons) / store.normAv;
         fprintf("Solved in %d solver step(s). Cost = %e, non-regularized cost = %e, cond(M) = %e, relative constraint error: %e.\n", ...
             length(info), cost, orig_cost, store.condM, relative_constraint_error);
+
+        results.inner_its(k) = length(info);
+        results.fx(k) = orig_cost;
+        results.relative_constraint_error(k) = relative_constraint_error;
+        results.condM(k) = store.condM;
+        if not(isempty(options.y))
+            results.augmented_lagrangian(k) = cost - epsilon*norm(y)^2;
+        end
 
         % we want to break out here so that we can return the y truly used
         % before updates
@@ -99,4 +116,6 @@ function [x, cost, info] = penalty_method(problem, x0, options)
     info.y = y;
     info.last_epsilon = epsilon;
     info.Delta = Delta;
+
+    warning(saved_warning_state); % restoring the previous state
 end
