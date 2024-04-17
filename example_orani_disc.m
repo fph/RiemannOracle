@@ -27,9 +27,10 @@ options.epsilon_decrease = 0.8;
 % If isempty(options.y), the vanilla penalty method is used.
 options.y = zeros(size(A,1), 1);
 
-options.outer_iterations = 80;
+options.max_outer_iterations = 120;
 
-[x cost info] = penalty_method(problem, [], options);
+[x, cost, info] = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 
 cost_reg = problem.cost(x_reg, struct());
-fprintf('Optimal cost function after inserting zeros in A*v: %e. sqrt(cost) = %e\n', cost_reg, sqrt(cost_reg));
+fprintf('Optimal value of f_{eps} with eps=%e: %e.\n', info.last_epsilon, cost);
+fprintf('Optimal value of f after inserting zeros in A*v: %e. sqrt(cost) = %e\n', cost_reg, sqrt(cost_reg));
