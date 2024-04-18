@@ -3,8 +3,6 @@
 % Matrix Market's benchmark matrix orani678.
 %
 
-addpath(genpath('manopt/manopt'));
-
 A = mmread('orani678.mtx');
 
 problem = nearest_singular_sparse([], A, true);
@@ -17,7 +15,7 @@ options.solver = @trustregions;
 % If isempty(options.y), the vanilla penalty method is used.
 options.y = zeros(size(A,1), 1);
 
-[x, cost, info] = penalty_method(problem, [], options);
+[x, cost, info, results] = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 
 cost_reg = problem.cost(x_reg, struct());
 fprintf('Optimal value of f_{eps} with eps=%e: %e.\n', info.last_epsilon, cost);

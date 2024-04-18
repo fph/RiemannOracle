@@ -6,8 +6,6 @@
 % This should give the same value as the last row of the table in 
 % [Guglielmi-Lubich-Sicilia, Sec. 7.1].
 
-addpath(genpath('manopt/manopt'));
-
 A = mmread('orani678.mtx');
 
 problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(1.7293467e-10)), A);
@@ -29,7 +27,7 @@ options.y = zeros(size(A,1), 1);
 
 options.max_outer_iterations = 120;
 
-[x, cost, info] = penalty_method(problem, [], options);
+[x, cost, info, results] = penalty_method(problem, [], options);
 x_reg = problem.recover_exact(x, 1/eps); 
 cost_reg = problem.cost(x_reg, struct());
 fprintf('Optimal value of f_{eps} with eps=%e: %e.\n', info.last_epsilon, cost);

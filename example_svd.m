@@ -13,7 +13,7 @@ options = struct();
 options.max_outer_iterations = 30;
 options.verbosity = 0;
 options.y = 0;
-[x, cost, info] = penalty_method(problem, [], options);
+[x, cost, info, results] = penalty_method(problem, [], options);
 regproblem = apply_regularization(problem, info.last_epsilon, info.y);
 [Delta, AplusDelta, store] = regproblem.minimizer(x, struct());
 

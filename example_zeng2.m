@@ -57,7 +57,7 @@ A = [1/sqrt(degq-d+1) * polytoep(p, degq-d) ... % Sylvester matrix
 
 alpha = [p;q];
 problem = nearest_singular_structured_dense(P, scaling*alpha, true);
-[x cost info] = penalty_method(problem, [], options);
+[x, cost, info, results] = penalty_method(problem, [], options);
 
 Apert = A + 1/scaling * info.Delta;
 
