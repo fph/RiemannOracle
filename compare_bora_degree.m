@@ -21,7 +21,6 @@ options.epsilon_decrease = 'f';
 options.max_outer_iterations = 800;
 % options.y = 0;
 
-
 use_hessian = true;
 
 list_degrees = 2:6;
@@ -39,20 +38,11 @@ for k = list_degrees
     for j = 1:n_sample
         
         A = randn(m,m*(k+1)) + 1i*randn(m,m*(k+1));
-            
-        % A3 = randn(m) + 1i*randn(m);
-        % A = [A0 A1 A2 A3];
-        % 
-        % A = A + info_right.Delta;
     
-        n = m;
-    
-        d = floor((k*(n-1))/2);
-    
-        V0 = randn(n,d+1);
+        d = floor((k*(m-1))/2);
+        V0 = randn(m,d+1);
         V0 = V0./norm(V0,'f');
-    
-        
+          
         tic
         [initial_vector,optimal_vector,optimize_at,minimum_distance]=dist_sing_BFGS_F(A);
         t1 = toc;
@@ -70,8 +60,6 @@ for k = list_degrees
         A = reshape(A,m,m,k+1);
         A = pagetranspose(A);
         A = reshape(A,m,m*(k+1));
-        % A = [A0.' A1.' A2.'];
-        % A = [A0.' A1.' A2.' A3.'];
     
         problem = nearest_singular_polynomial(A, d, use_hessian);
     

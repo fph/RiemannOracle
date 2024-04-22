@@ -21,11 +21,9 @@ options.epsilon_decrease = 'f';
 options.max_outer_iterations = 800;
 % options.y = 0;
 
-
 use_hessian = true;
 
-
-list_sizes = [5 10 15 20 25];
+list_sizes = [5 10 15 20 25 30];
 n_sample = 100;
 
 d_riemann = zeros(list_sizes(end), n_sample);
@@ -37,32 +35,23 @@ t_bora = zeros(list_sizes(end), n_sample);
 
 for m = list_sizes
     for j = 1:n_sample
-        
+        j
         A0 = randn(m) + 1i*randn(m);
         A1 = randn(m) + 1i*randn(m);
         A2 = randn(m) + 1i*randn(m);
         A = [A0 A1 A2];
     
-        % A3 = randn(m) + 1i*randn(m);
-        % A = [A0 A1 A2 A3];
-        % 
-        % A = A + info_right.Delta;
+        d = floor((k*(m-1))/2);
     
-        n = length(A1);
-    
-        d = floor((k*(n-1))/2);
-    
-        V0 = randn(n,d+1);
+        V0 = randn(m,d+1);
         V0 = V0./norm(V0,'f');
     
-        
         tic
         [initial_vector,optimal_vector,optimize_at,minimum_distance]=dist_sing_BFGS_F(A);
         t1 = toc;
     
         options.stopping_criterion = norm((A - A*optimize_at*pinv(optimize_at))*optimize_at,'f');
-    
-        % keyboard
+
         tic
         % Right kernel:
         problem = nearest_singular_polynomial(A, d, use_hessian);
@@ -71,7 +60,6 @@ for m = list_sizes
     
         % Left kernel:
         A = [A0.' A1.' A2.'];
-        % A = [A0.' A1.' A2.' A3.'];
     
         problem = nearest_singular_polynomial(A, d, use_hessian);
     
@@ -91,12 +79,6 @@ end
 
 % Total time spent (in minutes)
 (sum(t_bora,'all') + sum(t_riemann,'all')) / 60
-
-% d_riemann_av = mean(d_riemann(list_sizes, :),2);
-% d_bora_av = mean(d_bora(list_sizes, :),2);
-
-% t_riemann_av = mean(t_riemann(list_sizes, :),2);
-% t_bora_av = mean(t_bora(list_sizes, :),2); 
 
 d_means = [mean(d_riemann(list_sizes, :),2) mean(d_bora(list_sizes, :),2)];
 d_medians = [median(d_riemann(list_sizes, :),2) median(d_bora(list_sizes, :),2)];
@@ -136,9 +118,23 @@ t_medians = [median(t_riemann(list_sizes, :),2) median(t_bora(list_sizes, :),2)]
 % h = legend('Oracle (mean)','Das-Bora (mean)');
 % set(h, 'Location', 'NorthWest')
 
+ties = sum(abs(d_riemann(list_sizes,:) - d_bora(list_sizes,:)) < 1e-8, 2);
+we_win = sum(d_riemann(list_sizes,:) < d_bora(list_sizes,:) - 1e-8,2);
+they_win = sum(d_riemann(list_sizes,:) > d_bora(list_sizes,:) + 1e-8,2);
+
+figure;
+plot(list_sizes,[we_win, they_win, ties],'--x')
+% extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
+xlabel('size (n)','FontSize',14)
+ylabel('frequency','FontSize',14)
+h = legend('Oracle wins','Das-Bora wins','Ties');
+set(h, 'Location', 'NorthWest')
+
+
+% save(['bora_','size30'])
 
 
 
 
-% save(['bora_','sizes5to25'])
+
 
