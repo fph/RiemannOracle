@@ -8,7 +8,9 @@
 
 A = mmread('orani678.mtx');
 
-problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(1.7293467e-10)), A);
+phieps = input('Squared radius: ');
+
+problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(phieps)), A);
 
 options = struct();
 
