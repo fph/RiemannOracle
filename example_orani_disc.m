@@ -27,7 +27,7 @@ squaredradii = [
 datatable = table();
 for k = 1:length(squaredradii)
     
-    problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(phieps)), A);
+    problem = nearest_unstable_sparse([], @(x) inside_disc(x, sqrt(squaredradii(k))), A);
     
     options = struct();
     
