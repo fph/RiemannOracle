@@ -15,6 +15,11 @@ function [x, cost, info, results] = penalty_method(problem, x0, options)
 % a numerical constant (default=0.5), 'f' for an adaptive decrease based on 
 % the function value, 'g' for a decrease based on the value of the gradient.
 %
+% options.stopping_criterion specifies the value that the absolute 
+% error in the constraint needs to reach before the iteration is stopped.
+% If no value is provided, then a relative error of 1e-16 is used as the
+% stopping cirerion.
+%
 % Note for those implementing new problem structures:
 % This function accesses store.normAv and store.condM, which must exist.
 
@@ -22,6 +27,7 @@ function [x, cost, info, results] = penalty_method(problem, x0, options)
     default.epsilon_decrease = 0.5;
     default.max_outer_iterations = 40;
     default.y = [];
+    default.stopping_criterion = [];
 
     if not(exist('options', 'var'))
         options = struct();
@@ -70,9 +76,15 @@ function [x, cost, info, results] = penalty_method(problem, x0, options)
             results.augmented_lagrangian(k) = cost - epsilon*norm(y)^2;
         end
 
+        if isempty(options.stopping_criterion)
+            constraint_satisfied = relative_constraint_error < 1e-16;
+        else
+            constraint_satisfied = norm(cons) < options.stopping_criterion;
+        end
+
         % we want to break out here so that we can return the y truly used
-        % before updates
-        if relative_constraint_error < 1e-16 || k == options.max_outer_iterations
+        % before updates    
+        if constraint_satisfied || k == options.max_outer_iterations
             break
         end
 
