@@ -18,7 +18,7 @@ V0 = V0./norm(V0,'f');
 
 % Parameters and options used by the algorithm
 options = struct();
-options.maxiter = 50;
+options.maxiter = round(sqrt(k)*40);
 options.tolgradnorm = 1e-6;
 options.solver = @trustregions;
 options.verbosity = 1;
