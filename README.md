@@ -1,4 +1,4 @@
-## Riemannian-Oracle
+## Riemann-Oracle
 This repository contains the code for the solution of certain nearness problems in matrix theory, following the idea in 
 
 M. Gnazzo, V. Noferini, L. Nyman, F. Poloni. "Riemann-Oracle: A general-purpose Riemannian optimizer to solve nearness problems in matrix theory", soon available on arXiv, 2024.
