@@ -19,7 +19,7 @@ The code is able to tackle different matrix nearness problems, such as:
 * **Nearest matrix with prescribed nullity**: check the code in <code>nearest_nullity_structured_dense.m</code> for the general framework;
 * **Approximate GCD of prescribed degree betweeen scalar polynomials**: check the code in <code>example_zeng2.m</code> for an illustrative example.
 
-The function <code>penalty_method.m</code> contains the optimization procedure, using the Riemannian-Oracle method. It can be used to address other nearness problems, besides the one mentioned above.
+The function <code>penalty_method.m</code> contains the optimization procedure, using the Riemann-Oracle method. It can be used to address other nearness problems, besides the one mentioned above.
 
 ## How to use
 
