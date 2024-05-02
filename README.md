@@ -17,7 +17,7 @@ The code is able to tackle different matrix nearness problems, such as:
 * **Nearest singular matrix polynomial**;
 * **Nearest structured unstable matrix**;
 * **Nearest matrix with prescribed nullity**;
-* **Approximate GCD of prescribed degree betweeen scalar polynomials". 
+* **Approximate GCD of prescribed degree betweeen scalar polynomials**. 
 
 ## How to use
 
