@@ -22,7 +22,7 @@ options.maxiter = 100;
 options.max_outer_iterations = 40;
 
 problem = nearest_nullity_structured_dense(P, A, d, true);
-[x cost info] = penalty_method(problem, [], options);
+[x, cost, info, results] = penalty_method(problem, [], options);
 
 Apert = A + info.Delta;
 pp = sqrt(degq) * Apert(1:length(p), 1);

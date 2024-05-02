@@ -35,14 +35,14 @@ use_hessian = true;
 % Right kernel:
 problem = nearest_singular_polynomial(A, d, use_hessian);
           
-[V_right,~,info_right] = penalty_method(problem, V0, options);
+[V_right,~,info_right, results_right] = penalty_method(problem, V0, options);
 
 % Left kernel:
 A = [A0.' A1.' A2.'];
 
 problem = nearest_singular_polynomial(A, d, use_hessian);
           
-[V_left,~,info_left] = penalty_method(problem, V0, options);
+[V_left,~,info_left, results_left] = penalty_method(problem, V0, options);
 
 % Choose the smaller one
 norm(info_left.Delta,'fro')
