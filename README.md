@@ -1,7 +1,12 @@
-This is work-in-progress code for the solution of certain matrix nearness problems such as: what is the nearest matrix to a given matrix that has an eigenvalue in a certain closed region ? I.e., minimize 
+## Riemannian-Oracle
+This repository contains the code for the solution of certain nearness problems in matrix theory, following the idea in 
+
+M. Gnazzo, V. Noferini, L. Nyman, F. Poloni. "Riemann-Oracle: A general-purpose Riemannian optimizer to solve nearness problems in matrix theory", available on arXiv, 2024.
+
+We consider nearness problem in the general form: given $A$ without the property $\mathfrak{P}$, minimize the 
 
 $$
-  f(X) = \min_{X \colon \Lambda(X)\cap \mathbb{\Omega}\neq\emptyset} \\| A-X \\| _F. 
+  f(\Delta) = \min \left\lbrace \\| A-X \\| _F : X \mbox{with} \mathfrak{P} \right\rbrace. 
 $$
 
 The problem is reduced to optimization on manifolds and solved using the package [Manopt](https://www.manopt.org/). 
