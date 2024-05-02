@@ -13,11 +13,11 @@ with $\mathcal{S}$ linear subspace. The problem is reduced to optimization on ma
 
 ## Main features
 The code is able to tackle different matrix nearness problems, such as:
-* **Nearest structured singular matrix**;
-* **Nearest singular matrix polynomial**;
-* **Nearest structured unstable matrix**;
-* **Nearest matrix with prescribed nullity**;
-* **Approximate GCD of prescribed degree betweeen scalar polynomials**. 
+* **Nearest structured singular matrix**: check the codes in <code>nearest_singular_structured_dense.m<code> for the general framework;
+* **Nearest singular matrix polynomial**: 
+* **Nearest structured unstable matrix**:
+* **Nearest matrix with prescribed nullity**:
+* **Approximate GCD of prescribed degree betweeen scalar polynomials**: 
 
 ## How to use
 
