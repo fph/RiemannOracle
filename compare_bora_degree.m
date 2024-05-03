@@ -36,7 +36,7 @@ for k = list_degrees
         [initial_vector,optimal_vector,optimize_at,minimum_distance]=dist_sing_BFGS_F(A);
         t1 = toc;
     
-        options.stopping_criterion = norm((A - A*optimize_at*pinv(optimize_at))*optimize_at,'f');
+        options.stopping_criterion = norm((A - A*optimize_at*pinv(optimize_at))*optimize_at);
     
         tic
         % Right kernel:
@@ -76,48 +76,48 @@ d_medians = [median(d_riemann(list_degrees, :),2) median(d_bora(list_degrees, :)
 t_means = [mean(t_riemann(list_degrees, :),2) mean(t_bora(list_degrees, :),2)];
 t_medians = [median(t_riemann(list_degrees, :),2) median(t_bora(list_degrees, :),2)];
 
+% % 
+% figure;
+% plot(list_degrees,d_medians,'--x')
+% xlabel('degree','FontSize',14)
+% ylabel('distance','FontSize',14)
+% h = legend('Oracle (median)','Das-Bora (median)');
+% set(h, 'Location', 'NorthWest')
 % 
-figure;
-plot(list_degrees,d_medians,'--x')
-xlabel('degree','FontSize',14)
-ylabel('distance','FontSize',14)
-h = legend('Oracle (median)','Das-Bora (median)');
-set(h, 'Location', 'NorthWest')
-
-figure;
-plot(list_degrees,d_means,'--x')
-% extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
-xlabel('degree','FontSize',14)
-ylabel('distance','FontSize',14)
-h = legend('Oracle (mean)','Das-Bora (mean)');
-set(h, 'Location', 'NorthWest')
-
-figure;
-plot(list_degrees,t_medians,'--x')
-xlabel('degree','FontSize',14)
-ylabel('time (s)','FontSize',14)
-h = legend('Oracle (median)','Das-Bora (median)');
-set(h, 'Location', 'NorthWest')
-
-figure;
-plot(list_degrees,t_means,'--x')
-% extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
-xlabel('degree','FontSize',14)
-ylabel('time (s)','FontSize',14)
-h = legend('Oracle (mean)','Das-Bora (mean)');
-set(h, 'Location', 'NorthWest')
+% figure;
+% plot(list_degrees,d_means,'--x')
+% % extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
+% xlabel('degree','FontSize',14)
+% ylabel('distance','FontSize',14)
+% h = legend('Oracle (mean)','Das-Bora (mean)');
+% set(h, 'Location', 'NorthWest')
 % 
-ties = sum(abs(d_riemann(list_degrees,:) - d_bora(list_degrees,:)) < 1e-8, 2);
-we_win = sum(d_riemann(list_degrees,:) < d_bora(list_degrees,:) - 1e-8,2);
-they_win = sum(d_riemann(list_degrees,:) > d_bora(list_degrees,:) + 1e-8,2);
-
-figure;
-plot(list_degrees,[we_win, they_win, ties],'--x')
-% extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
-xlabel('degree','FontSize',14)
-ylabel('frequency','FontSize',14)
-h = legend('Oracle wins','Das-Bora wins','Ties');
-set(h, 'Location', 'NorthWest')
+% figure;
+% plot(list_degrees,t_medians,'--x')
+% xlabel('degree','FontSize',14)
+% ylabel('time (s)','FontSize',14)
+% h = legend('Oracle (median)','Das-Bora (median)');
+% set(h, 'Location', 'NorthWest')
+% 
+% figure;
+% plot(list_degrees,t_means,'--x')
+% % extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
+% xlabel('degree','FontSize',14)
+% ylabel('time (s)','FontSize',14)
+% h = legend('Oracle (mean)','Das-Bora (mean)');
+% set(h, 'Location', 'NorthWest')
+% % 
+% ties = sum(abs(d_riemann(list_degrees,:) - d_bora(list_degrees,:)) < 1e-8, 2);
+% we_win = sum(d_riemann(list_degrees,:) < d_bora(list_degrees,:) - 1e-8,2);
+% they_win = sum(d_riemann(list_degrees,:) > d_bora(list_degrees,:) + 1e-8,2);
+% 
+% figure;
+% plot(list_degrees,[we_win, they_win, ties],'--x')
+% % extraInputs = {'interpreter','latex','fontsize',14}; % name, value pairs
+% xlabel('degree','FontSize',14)
+% ylabel('frequency','FontSize',14)
+% h = legend('Oracle wins','Das-Bora wins','Ties');
+% set(h, 'Location', 'NorthWest')
 
 % save(['bora_','degrees2to6_new'])
 
