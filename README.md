@@ -3,7 +3,7 @@ This repository contains the code for the solution of certain nearness problems 
 
 M. Gnazzo, V. Noferini, L. Nyman, F. Poloni. "Riemann-Oracle: A general-purpose Riemannian optimizer to solve nearness problems in matrix theory", soon available on arXiv, 2024.
 
-We consider nearness problem in the general form: given $A$ without the property $\mathfrak{P}$, minimize the 
+We consider nearness problems in the general form: given $A$ without the property $\mathfrak{P}$, minimize the 
 
 $$
   f(\Delta) = \min \left\lbrace \\| A-\Delta \\| _F : \Delta \mbox{ with } \mathfrak{P}, \Delta \in \mathcal{S}\right\rbrace, 
