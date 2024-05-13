@@ -10,7 +10,7 @@ function problem = nearest_nullity_structured_dense(P, A, l, use_hessian)
 % we keep the notation v even if it is a matrix here, to be consistent
 % with the other files.
 
-n = size(A, 2);
+n = size(P, 2);
 if isreal(A)
     problem.M = grassmannfactory(n, l);
 else
