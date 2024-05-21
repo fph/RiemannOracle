@@ -10,7 +10,7 @@ for d = 9:-1:4
     % setting options
     options = struct();
     options.y = 0;
-    options.maxiter = 3000;
+    options.maxiter = 5000;
     options.verbosity = 0;
     options.max_outer_iterations = 80;
     options.epsilon_decrease = 0.7;
@@ -66,22 +66,24 @@ for d = 9:-1:4
 
     if nullity > 1
         warning('nullity > 1, we need to remove spurious factors from the cofactors.');
-        d = d + nullity - 1;
+        dtrue = d + nullity - 1;
+    else
+        dtrue = d;	  
     end
 
     % Constructs a B with possibly smaller size if we have detected higher nullity,
     % otherwise B = Apert.
 
-    B = [1/sqrt(degq-d+1) * polytoep(pp, degq-d) ... % Sylvester matrix
-        1/sqrt(degp-d+1) * polytoep(qq, degp-d)];
+    B = [1/sqrt(degq-dtrue+1) * polytoep(pp, degq-dtrue) ... % Sylvester matrix
+        1/sqrt(degp-dtrue+1) * polytoep(qq, degp-dtrue)];
 
     % This new Sylvester matrix should have nullity = 1.
     [~, ~, W] = svd(B);
     x = W(:, end);
 
-    uu = x(1:degq-d+1);
-    vv = x(degq-d+2:end);
-    gg = polytoep(vv, d) \ pp;  % gg = deconv(pp, vv) but more stable
+    uu = x(1:degq-dtrue+1);
+    vv = x(degq-dtrue+2:end);
+    gg = polytoep(vv, dtrue) \ pp;  % gg = deconv(pp, vv) but more stable
 
     nearness = norm([conv(gg,vv)-p; conv(gg,-uu)-q]);
     experiment_results.d(d) = d;
