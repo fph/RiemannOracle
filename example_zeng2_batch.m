@@ -83,9 +83,9 @@ for d = 9:-1:4
 
     uu = x(1:degq-dtrue+1);
     vv = x(degq-dtrue+2:end);
-    gg = polytoep(vv, dtrue) \ pp;  % gg = deconv(pp, vv) but more stable
+    gg = [polytoep(vv, d); polytoep(-uu, d)] \ [1/sqrt(degq-d+1)*pp;1/sqrt(degp-d+1)*qq];
 
-    nearness = norm([conv(gg,vv)-p; conv(gg,-uu)-q]);
+    nearness = norm([conv(gg,sqrt(degq-d+1)*vv)-p; conv(gg,-sqrt(degp-d+1)*uu)-q]);
     experiment_results.d(d) = d;
     experiment_results.nearness(d) = nearness;
     experiment_results
