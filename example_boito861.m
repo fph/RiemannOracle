@@ -17,10 +17,10 @@ scaling = 1;
 % setting options
 options = struct();
 options.y = 0;
-options.maxiter = 200;
+options.maxiter = 5000;
 options.verbosity = 1;
-options.max_outer_iterations = 60;
-options.epsilon_decrease = 0.5;
+options.max_outer_iterations = 80;
+options.epsilon_decrease = 0.7;
 options.starting_epsilon = 1 * scaling;
 options.tolgradnorm = 1e-12 * scaling;
 
