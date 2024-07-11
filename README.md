@@ -1,7 +1,7 @@
 ## Riemann-Oracle
 This repository contains the code for the solution of certain nearness problems in matrix theory, following the idea in 
 
-M. Gnazzo, V. Noferini, L. Nyman, F. Poloni. "Riemann-Oracle: A general-purpose Riemannian optimizer to solve nearness problems in matrix theory", soon available on arXiv, 2024.
+M. Gnazzo, V. Noferini, L. Nyman, F. Poloni. "Riemann-Oracle: A general-purpose Riemannian optimizer to solve nearness problems in matrix theory", available on [arXiv](https://arxiv.org/abs/2407.03957), 2024.
 
 We consider nearness problems in the general form: given $A$ without the property $\mathfrak{P}$, minimize the 
 
