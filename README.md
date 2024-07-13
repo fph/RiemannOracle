@@ -6,10 +6,10 @@ M. Gnazzo, V. Noferini, L. Nyman, F. Poloni. "Riemann-Oracle: A general-purpose 
 We consider nearness problems in the general form: given $A$ without the property $\mathfrak{P}$, minimize the 
 
 $$
-  f(\Delta) = \min \left\lbrace \\| A-\Delta \\| _F : \Delta \mbox{ with } \mathfrak{P}, \Delta \in \mathcal{S}\right\rbrace, 
+  f(\Delta) = \min \left\lbrace \\| \Delta \\| _F : A+\Delta \mbox{ with } \mathfrak{P}, \Delta \in \mathcal{S}\right\rbrace, 
 $$
 
-with $\mathcal{S}$ linear subspace. The problem is reduced to optimization on manifolds and solved using the package [Manopt](https://www.manopt.org/). 
+with $\mathcal{S}$ a linear subspace. The problem is reduced to optimization on manifolds and solved using the package [Manopt](https://www.manopt.org/). 
 
 ## Main features
 The code is able to tackle different matrix nearness problems, such as:
