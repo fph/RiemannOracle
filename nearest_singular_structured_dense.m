@@ -41,7 +41,7 @@ end
 
 % create Delta = \sum P(i)delta(i)
 function Delta = make_Delta(P, delta)
-    Delta = tensorprod(P, delta, 3, 1);
+    Delta = tensorprod(P, delta.', 3);
 end
 
 % fill values in the 'store', a caching structure used by Manopt
