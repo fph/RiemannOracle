@@ -37,9 +37,24 @@ function M = make_M(P, v, k)
     M = reshape(pagemtimes(P, w), [size(P,1) size(P,3)]);
 end
 
+function M = make_M_prime(P, v, k)
+    w = kron([((k-1:-1:1).*v.X.^(k-2:-1:0)) 0].',v.Y);
+    M = reshape(pagemtimes(P, w), [size(P,1) size(P,3)]);
+end
+
 % create Delta = \sum P(i)delta(i)
 function Delta = make_Delta(P, delta)
     Delta = tensorprod(P, delta, 3, 1);
+end
+
+function Av = evalAv(A, v, lambda, k)
+    w = kron(lambda.^(k-1:-1:0).',v);
+    Av = A * w;
+end
+
+function Av = evalAprimev(A, v, lambda, k)
+    w = kron([((k-1:-1:1).*lambda.^(k-2:-1:0)) 0].',v);
+    Av = A * w;
 end
 
 % fill values in the 'store', a caching structure used by Manopt
@@ -72,8 +87,7 @@ function store = populate_store(P, A, epsilon, y, v, store)
             r1 = -y*epsilon;
             r2 = -SWTalpha;
         else
-            w = kron(v.X.^(store.k-1:-1:0).',v.Y);
-            Av = store.A * w;
+            Av = evalAv(store.A, v.Y, v.X, store.k);
             store.normAv = norm(Av);
             r1 = -Av - y*epsilon;
             r2 = 0;
@@ -102,11 +116,10 @@ end
 
 function [eg, store] = egrad(P, A, epsilon, y, v, store)
     store = populate_store(P, A, epsilon, y, v, store);
-    eg.Y = store.AplusDelta' * store.z * (-2);
     Delta = make_Delta(P, store.delta);
-    % keyboard
     w = kron([((store.k-1:-1:1).*v.X.^(store.k-2:-1:0)) 0].',v.Y);
     eg.X = ((store.A + Delta)*w)' * store.z * (-2);
+    eg.Y = store.AplusDelta' * store.z * (-2);
 end
 
 function [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, v, store)
@@ -121,11 +134,33 @@ function [ehw, store] = ehess(P, A, epsilon, y, v, w, store)
     z = store.z;
     M = store.M;
     WS = store.WS;
-    dM = make_M(P, w, store.k);
-    dz = -solve_system_svd(store.U1, WS, store.d, epsilon, AplusDelta*w, WS'*(dM'*z));
+    vxwy = struct();
+    vxwy.X = v.X;
+    vxwy.Y = w.Y;
+    dM = make_M(P, vxwy, store.k);
+    dz = -solve_system_svd(store.U1, WS, store.d, epsilon, AplusDelta*w.Y, WS'*(dM'*z));
     ddelta = dM' * z + M' * dz;
     dDelta = make_Delta(P, ddelta);
-    ehw = (dDelta' * z + AplusDelta' * dz) * (-2);
+    
+    M_prime = make_M_prime(P, v, store.k)*w.X;
+    Delta = make_Delta(P, store.delta);
+    dv = kron([((store.k-1:-1:1).*v.X.^(store.k-2:-1:0)) 0].',v.Y);
+    dw = kron([((store.k-1:-1:1).*v.X.^(store.k-2:-1:0)) 0].',w.Y);
+    z_prime = -solve_system_svd(store.U1, WS, store.d, epsilon, (store.A + Delta)*dv*w.X, WS'*(M_prime'*z));
+    
+    delta_prime = M_prime'*z + M'*z_prime;
+    Delta_prime1 = make_Delta(P, delta_prime);
+    Delta_prime2 = evalAprimev(Delta, eye(size(P,2)/store.k), v.X, store.k)*w.X;
+    Delta_prime = Delta_prime2 + evalAv(Delta_prime1, eye(size(P,2)/store.k), v.X, store.k);
+
+    dDeltaHz = evalAv(dDelta, eye(size(P,2)/store.k), v.X, store.k)'*z;
+    ddv = kron([((store.k-2:-1:1).*(store.k-1:-1:2).*v.X.^(store.k-3:-1:0)) 0 0].',v.Y);
+    AplusDelta_prime = evalAprimev(store.A, eye(size(P,2)/store.k), v.X, store.k)*w.X + Delta_prime;
+    
+    ehw.Y = (AplusDelta_prime'*store.z + AplusDelta'*z_prime + dDeltaHz + AplusDelta' * dz) * (-2);
+    ehw.X = (((store.A + Delta)*ddv*w.X + evalAprimev(Delta_prime1, v.Y, v.X, store.k))'*z + ((store.A + Delta)*dv)'*z_prime ... 
+        + ((store.A + Delta)*dw)'*z + (dDelta*dv)'*z + ((store.A + Delta)*dv)'*dz) * (-2); 
+
 end
 
 function [prod, store] = constraint(P, A, epsilon, y, v, store)
