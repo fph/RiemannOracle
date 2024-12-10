@@ -5,7 +5,7 @@ function problem = nearest_defective_structured_dense(P, A)
 % We assume (without checking) that this basis is orthogonal.
 
 n = size(P, 2);
-problem.M = grassmannfactory(n,2);
+problem.M = grassmanncomplexfactory(n,2);
 
 % populate the struct with generic functions that include the regularization as parameters
 problem.gencost  = @(epsilon, y, v, store) cost(P, A, epsilon, y, v, store);
@@ -51,7 +51,6 @@ function store = populate_store(P, A, epsilon, y, V, store)
         WS = W .* s';
         store.WS = WS;
         if isvector(A)
-            error('not implemented')
             SWTalpha = store.WS' * A;
             store.normAv = norm(SWTalpha);
             r1 = -y*epsilon;
