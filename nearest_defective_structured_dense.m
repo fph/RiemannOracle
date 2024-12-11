@@ -5,7 +5,7 @@ function problem = nearest_defective_structured_dense(P, A)
 % We assume (without checking) that this basis is orthogonal.
 
 n = size(P, 2);
-problem.M = grassmanncomplexfactory(n,2);
+problem.M = stiefelcomplexfactory(n,2);
 
 % populate the struct with generic functions that include the regularization as parameters
 problem.gencost  = @(epsilon, y, v, store) cost(P, A, epsilon, y, v, store);
