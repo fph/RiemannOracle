@@ -8,7 +8,7 @@ function [z, delta, cf] = solve_system_svd(U1, VS, d, epsilon, r1, r2)
 % Return z, M'*z, and also r'*(MM'+epsilon*I)^{-1}r, which 
 % are cheap to compute and are useful, too, sometimes.
 
-% relies on the expansion x = U1*diag(D)*U1'*r + U2*1/epsilon*I*U2'*r
+% relies on the expansion z = U1*diag(D)*U1'*r + U2*1/epsilon*I*U2'*r
 % after replacing U2*U2' = I - U1*U1'.
 % Also note that U2*U2' = 0 unless M is tall-thin
 
