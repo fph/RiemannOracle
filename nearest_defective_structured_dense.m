@@ -71,10 +71,14 @@ function store = populate_store(P, A, epsilon, y, V, store)
         store.vu = vu;
         [zp, deltap, a] = solve_system_svd(U1, WS, d, epsilon, vu, 0);
         lambda = -(vu'*z0) / a;
-        r = lambda*vu + r0;
-        z = lambda*zp + z0;
-        delta = lambda*deltap + delta0;
-        cf = real(r'*z);
+%        r = lambda*vu + r0;
+
+%        z = lambda*zp + z0;
+%        delta = lambda*deltap + delta0;
+%        cf = real(r'*z);
+        % this is more accurate because in some cases zp, z0 tend to get
+        % larger than z
+        [z delta cf] = solve_system_svd(U1, WS, d, epsilon, r1+lambda*vu, r2);
 
         if isvector(A)
             AplusDelta = make_Delta(P, A+delta);
