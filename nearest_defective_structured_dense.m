@@ -24,14 +24,30 @@ end
 
 % create M(v)
 function M = make_M(P, V)
-    M1 = reshape(pagemtimes(P, V(:,2)), [size(P,1) size(P,3)]);
-    M2 = reshape(pagemtimes(V(:,1)',P), [size(P,2) size(P,3)]);
+    if isa(V, 'sym') % special code path for vpa(); useful for testing
+        M1 = zeros(size(P,1), size(P,3), 'like', V);
+        M2 = zeros(size(P,1), size(P,3), 'like', V);
+        for i = 1:size(P,3)
+            M1(:,i) = P(:,:,i)*V(:,2);
+            M2(:,i) = transpose(P(:,:,i)) * conj(V(:,1));
+        end
+    else
+        M1 = reshape(pagemtimes(P, V(:,2)), [size(P,1) size(P,3)]);
+        M2 = reshape(pagemtimes(V(:,1)',P), [size(P,2) size(P,3)]);
+    end
     M = [M1;M2];
 end
 
 % create Delta = \sum P(i)delta(i)
 function Delta = make_Delta(P, delta)
-    Delta = tensorprod(P, delta, 3, 1);
+    if isa(delta, 'sym')
+        Delta = zeros(size(P,1),size(P,2), 'like', delta);
+        for i = 1:size(P,3)
+            Delta = Delta + delta(i)*P(:,:,i);
+        end
+    else
+        Delta = tensorprod(P, delta, 3, 1);
+    end
 end
 
 % fill values in the 'store', a caching structure used by Manopt
@@ -101,7 +117,7 @@ end
 function [eg, store] = egrad(P, A, epsilon, y, V, store)
     store = populate_store(P, A, epsilon, y, V, store);
     n = size(P,1);
-    eg = zeros(n,2);
+    eg = zeros(n,2, 'like', V);
     lambda = store.lambda;
     AplusDelta = store.AplusDelta;
     z = store.z;
