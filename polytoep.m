@@ -1,6 +1,8 @@
 function T = polytoep(P, k)
 % (block) Toeplitz matrix associated to the product with a (matrix) polynomial
 %
+% T = polytoep(P, k)
+%
 % Input: the coefficients P of a matrix polynomial; P(:,:,end) is the
 % leading coefficient.
 % If P is a vector, works with a scalar polynomial instead.
