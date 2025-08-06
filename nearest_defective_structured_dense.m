@@ -1,8 +1,15 @@
-function problem = nearest_defective_structured_dense(P, A)
+function problem = nearest_defective_structured_dense(P, A, use_hessian)
 % Create a Manopt problem structure for the nearest defective structured
 % matrix.
 % Uses a dense mxnxp array P as storage for the perturbation basis
 % We assume (without checking) that this basis is orthogonal.
+
+if not(exist('use_hessian', 'var'))
+    use_hessian = false;
+end
+if use_hessian
+    error('The exact Hessian for this problem is not known (to us).')
+end
 
 n = size(P, 2);
 problem.M = stiefelcomplexfactory(n,2);
@@ -10,6 +17,9 @@ problem.M = stiefelcomplexfactory(n,2);
 % populate the struct with generic functions that include the regularization as parameters
 problem.gencost  = @(epsilon, y, v, store) cost(P, A, epsilon, y, v, store);
 problem.genegrad = @(epsilon, y, v, store) egrad(P, A, epsilon, y, v, store);
+if use_hessian
+    problem.genehess = @(epsilon, y, v, w, store) ehess(P, A, epsilon, y, v, w, store);
+end
 problem.genminimizer = @(epsilon, y, v, store) minimizer(P, A, epsilon, y, v, store);
 
 % compute the value of the constraint (A+E)v.

@@ -1,15 +1,27 @@
-function problem = nearest_defective_full_dense(P, A)
+function problem = nearest_defective_structured_dense_new(P, A, use_hessian)
 % Create a Manopt problem structure for the nearest defective structured
 % matrix.
 % Uses a dense mxnxp array P as storage for the perturbation basis
 % We assume (without checking) that this basis is orthogonal.
+%
+% This variant uses some more optimizations specific to this problem
 
-n = size(A, 2);
+if not(exist('use_hessian', 'var'))
+    use_hessian = false;
+end
+if use_hessian
+    error('The exact Hessian for this problem is not known (to us).')
+end
+
+n = size(P, 2);
 problem.M = stiefelcomplexfactory(n,2);
 
 % populate the struct with generic functions that include the regularization as parameters
 problem.gencost  = @(epsilon, y, v, store) cost(P, A, epsilon, y, v, store);
 problem.genegrad = @(epsilon, y, v, store) egrad(P, A, epsilon, y, v, store);
+if use_hessian
+    problem.genehess = @(epsilon, y, v, w, store) ehess(P, A, epsilon, y, v, w, store);
+end
 problem.genminimizer = @(epsilon, y, v, store) minimizer(P, A, epsilon, y, v, store);
 
 % compute the value of the constraint (A+E)v.
@@ -41,40 +53,60 @@ function store = populate_store(P, A, epsilon, y, V, store)
         if isscalar(y)  % in case we initialize with y = 0
             y = ones(2*size(P,1), 1) * y;
         end
-        assert(all(y==0)); % TODO: do general case
-        Av = A * V(:,2);
-%        r0 = [-Av;-transpose(A)*conj(V(:,1))] - y*epsilon;
-%        r1 = [V(:,2); conj(V(:,1))];
+        M = make_M(P, V);
+        if epsilon==0
+            % trick: we "regularize" M in case epsilon=0,
+            % to change its structural zero singular value into an 1. This
+            % modification
+            % will not change the results of the following computations, since 
+            % r is orthogonal to [-u; conj(v)]
+            Mreg = M + [-V(:,1); conj(V(:,2))] * kron(transpose(V(:,1)), V(:,2)');
+            [U1, S, W] = svd(Mreg, 'econ');
+        else
+            [U1, S, W] = svd(M, 'econ');
+        end
 
-%        n = size(V,1);
-        Av = A*V(:,2);
-        vAu = V(:,1)'*Av;
-%        invMr0 = 1/(1+epsilon)*r0 + 1/(1+epsilon)/(2+epsilon)*vAu*[V(:,1);conj(V(:,2))];
-%        invMr1 = 1/(1+epsilon)*r1;
-        lambda = (V(:,2)'*A*V(:,2) + V(:,1)'*A*V(:,1)) / 2;
-        %r = r0 + lambda*r1;
-        %z = invMr0 + lambda * invMr1;
+        store.M = M;
+        store.U1 = U1;
+        s = diag(S);
+        store.condM = max(s) / min(s);
+        WS = W .* s';
+        store.WS = WS;
 
-        v1 = Av - V(:,2)*lambda;
-        u1 = V(:,1)'*A - lambda*V(:,1)';
-        u1mod = u1 - (u1*V(:,2))*V(:,2)';
-        cf = (norm(v1)^2 + norm(u1mod)^2 + epsilon/(2+epsilon)*abs(vAu)^2) / (1+epsilon);
-        u1mod = (u1 - 1/(2+epsilon) * (u1*V(:,2))*V(:,2)') / (1+epsilon);
-        v1mod = (v1 - 1/(2+epsilon) * V(:,1) * (V(:,1)'*v1)) / (1+epsilon);
-        z = [-v1mod; transpose(-u1mod)];
-        % z = [-v1mod; transpose(-u1mod)]
-        %delta = kron(conj(V(:,2)), z(1:n)) + kron(z(n+1:end),V(:,1));
-%        AplusDelta = A + make_Delta(P, delta);
-        Delta = -V(:,1) * u1mod  - v1mod * V(:,2)';
-        AplusDelta = A + Delta;
+        % shortcut: U1=U is square here, since M is always short-fat
+        assert(size(U1,1)==size(U1,2));
 
-        store.normAv = norm(Av);
+        if isvector(A)
+            SWTalpha = store.WS' * A;
+            store.normAv = norm(SWTalpha);
+            Utr0 = -SWTalpha - U1'*y*epsilon;
+            Utr1 = U1'*[V(:,2); conj(V(:,1))];
+        else
+            Av = A * V(:,2);
+            Utr0 = U1'*([-Av;-transpose(A)*conj(V(:,1))] - y*epsilon);
+            store.normAv = norm(Av);
+            Utr1 = U1'*[V(:,2); conj(V(:,1))];
+        end
+        store.s = s;
+        d = 1 ./ (s.^2 + epsilon);
+        store.d = d;
+        % shortcut: lambda = lambda0, for this problem
+        lambda = -sum(conj(Utr1) .* Utr0 .* d) / sum(conj(Utr1) .* Utr1 .* d);
+        Utr = Utr1 * lambda + Utr0;
+        cf = sum(conj(Utr) .* Utr .* d);
+        z = U1 * (d .* Utr);
+        delta = WS * (d .* Utr);
+
+        if isvector(A)
+            AplusDelta = make_Delta(P, A+delta);
+        else
+            AplusDelta = A + make_Delta(P, delta);
+        end
         store.lambda = lambda;
         store.z = z;
-        store.Delta = Delta;
+        store.delta = delta;
         store.AplusDelta = AplusDelta;
         store.cf = cf;
-        store.condM = NaN;
     end
 end
 
@@ -96,7 +128,7 @@ end
 
 function [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, V, store)
     store = populate_store(P, A, epsilon, y, V, store);
-    Delta = store.Delta;
+    Delta = make_Delta(P, store.delta);
     AplusDelta = store.AplusDelta;
 end
 
@@ -116,7 +148,7 @@ end
 function [prod, store] = constraint(P, A, epsilon, y, V, store)
     [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, V, store);
     if isvector(A)
-        prod = store.M * (A + store.Delta);
+        prod = store.M * (A + store.delta);
     else
         prod = [AplusDelta * V(:,2); transpose(AplusDelta)*conj(V(:,1))];
     end
