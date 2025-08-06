@@ -4,6 +4,10 @@ function problem = nearest_singular_structured_dense(P, A, use_hessian)
 % Uses a dense mxnxp array P as storage for the perturbation basis
 % We assume (without checking) that this basis is orthogonal.
 
+if not(exist('use_hessian', 'var'))
+    use_hessian = true;
+end
+
 n = size(P, 2);
 if isreal(A) && isreal(P)
     problem.M = spherefactory(n);
