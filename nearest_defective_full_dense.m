@@ -1,48 +1,45 @@
-function problem = nearest_defective_full_dense(P, A)
+function problem = nearest_defective_full_dense(A, use_hessian)
 % Create a Manopt problem structure for the nearest defective structured
 % matrix.
 % Uses a dense mxnxp array P as storage for the perturbation basis
 % We assume (without checking) that this basis is orthogonal.
 
+if not(exist('use_hessian', 'var'))
+    use_hessian = false;
+end
+if use_hessian
+    error('The exact Hessian for this problem is not known (to us).')
+end
+
 n = size(A, 2);
 problem.M = stiefelcomplexfactory(n,2);
 
 % populate the struct with generic functions that include the regularization as parameters
-problem.gencost  = @(epsilon, y, v, store) cost(P, A, epsilon, y, v, store);
-problem.genegrad = @(epsilon, y, v, store) egrad(P, A, epsilon, y, v, store);
-problem.genminimizer = @(epsilon, y, v, store) minimizer(P, A, epsilon, y, v, store);
+problem.gencost  = @(epsilon, y, v, store) cost(A, epsilon, y, v, store);
+problem.genegrad = @(epsilon, y, v, store) egrad(A, epsilon, y, v, store);
+if use_hessian
+    problem.genehess = @(epsilon, y, v, w, store) ehess(P, A, epsilon, y, v, w, store);
+end
+problem.genminimizer = @(epsilon, y, v, store) minimizer(A, epsilon, y, v, store);
 
 % compute the value of the constraint (A+E)v.
 % We need this for the extended Lagrangian update
 % Note that this constraint is not zero when epsilon is nonzero
-problem.genconstraint = @(epsilon, y, v, store) constraint(P, A, epsilon, y, v, store);
+problem.genconstraint = @(epsilon, y, v, store) constraint(A, epsilon, y, v, store);
 
 % populate functions from the Manopt interface with zero regularization
 problem = apply_regularization(problem, 0, 0);
 
 end
 
-% create M(v)
-function M = make_M(P, V)
-    M1 = reshape(pagemtimes(P, V(:,2)), [size(P,1) size(P,3)]);
-    M2 = reshape(pagemtimes(V(:,1)',P), [size(P,2) size(P,3)]);
-    M = [M1;M2];
-end
-
-% create Delta = \sum P(i)delta(i)
-function Delta = make_Delta(P, delta)
-    Delta = tensorprod(P, delta, 3, 1);
-end
-
 % fill values in the 'store', a caching structure used by Manopt
 % with precomputed fields that we need in other functions as well
-function store = populate_store(P, A, epsilon, y, V, store)
+function store = populate_store(A, epsilon, y, V, store)
     if ~isfield(store, 'cf')
         if isscalar(y)  % in case we initialize with y = 0
-            y = ones(2*size(P,1), 1) * y;
+            y = ones(2*size(A,1), 1) * y;
         end
         assert(all(y==0)); % TODO: do general case
-        Av = A * V(:,2);
 %        r0 = [-Av;-transpose(A)*conj(V(:,1))] - y*epsilon;
 %        r1 = [V(:,2); conj(V(:,1))];
 
@@ -78,14 +75,14 @@ function store = populate_store(P, A, epsilon, y, V, store)
     end
 end
 
-function [cf, store] = cost(P, A, epsilon, y, V, store)
-    store = populate_store(P, A, epsilon, y, V, store);
+function [cf, store] = cost(A, epsilon, y, V, store)
+    store = populate_store(A, epsilon, y, V, store);
     cf = store.cf;
 end
 
-function [eg, store] = egrad(P, A, epsilon, y, V, store)
-    store = populate_store(P, A, epsilon, y, V, store);
-    n = size(P,1);
+function [eg, store] = egrad(A, epsilon, y, V, store)
+    store = populate_store(A, epsilon, y, V, store);
+    n = size(A,1);
     eg = zeros(n,2);
     lambda = store.lambda;
     AplusDelta = store.AplusDelta;
@@ -94,8 +91,8 @@ function [eg, store] = egrad(P, A, epsilon, y, V, store)
     eg(:,1) = (lambda*conj(z(n+1:end)) - AplusDelta*conj(z(n+1:end))) * 2;
 end
 
-function [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, V, store)
-    store = populate_store(P, A, epsilon, y, V, store);
+function [Delta, AplusDelta, store] = minimizer(A, epsilon, y, V, store)
+    store = populate_store(A, epsilon, y, V, store);
     Delta = store.Delta;
     AplusDelta = store.AplusDelta;
 end
@@ -113,8 +110,8 @@ end
 %     ehw = (dDelta' * z + AplusDelta' * dz) * (-2);
 % end
 
-function [prod, store] = constraint(P, A, epsilon, y, V, store)
-    [Delta, AplusDelta, store] = minimizer(P, A, epsilon, y, V, store);
+function [prod, store] = constraint(A, epsilon, y, V, store)
+    [Delta, AplusDelta, store] = minimizer(A, epsilon, y, V, store);
     if isvector(A)
         prod = store.M * (A + store.Delta);
     else
