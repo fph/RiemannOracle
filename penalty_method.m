@@ -122,12 +122,13 @@ function [x, cost, info, results] = penalty_method(problem, x0, options)
                 epsilon = epsilon * options.epsilon_decrease;
         end    
     end
-    Delta = regproblem.minimizer(x, struct());
+    [Delta AplusDelta last_store] = regproblem.minimizer(x, struct());
 
     info = struct();
     info.y = y;
     info.last_epsilon = epsilon;
     info.Delta = Delta;
+    info.last_store = last_store;
 
     warning(saved_warning_state); % restoring the previous state
 end
