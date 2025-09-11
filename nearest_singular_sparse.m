@@ -67,12 +67,13 @@ function [eg, store] = egrad(structure, A, epsilon, y, v, store)
     eg = -2*(A' * z + (structure' * (conj(z) .* z) .* v)); 
 end
 
-function E = minimizer(structure, A, epsilon, y, v, store)
+function [E AplusE store] = minimizer(structure, A, epsilon, y, v, store)
     store = populate_store(structure, A, epsilon, y, v, store);
     r = store.r;
     d = store.d;
     z = d .* r;
     E = z .* (v' .* structure);
+    AplusE = A+E;
 end
 
 function [ehw, store] = ehess(structure, A, epsilon, y, v, w, store)
