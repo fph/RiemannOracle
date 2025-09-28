@@ -39,30 +39,39 @@ function store = populate_store(A, epsilon, y, V, store)
         if isscalar(y)  % in case we initialize with y = 0
             y = ones(2*size(A,1), 1) * y;
         end
-        assert(all(y==0)); % TODO: do general case
-%        r0 = [-Av;-transpose(A)*conj(V(:,1))] - y*epsilon;
-%        r1 = [V(:,2); conj(V(:,1))];
+        
+        n = size(V,1);
+        v = V(:,2);
+        u = V(:,1);
+        Av = A*v;
+        Astaru = A'*u;
+        r1 = [v; conj(u)];
+        r0 = -[Av; conj(Astaru)] - y*epsilon;
+        beta = r1'*r0;
+        yv = y(1:n);
+        conjyu = conj(y(n+1:end));
+        gamma1 = conj(v'*(Astaru + conjyu*epsilon));
+        gamma2 = u'*(Av+yv*epsilon);
+        a = 2/(1+epsilon); b = beta/(1+epsilon);
+        lambda = -b/a;
+        if epsilon == 0
+            secondterm = 0;
+        else
+            secondterm = (gamma1-gamma2) / epsilon / (2+epsilon);
+        end
+        eta1 = gamma1/(2+epsilon) + secondterm;
+        eta2 = gamma2/(2+epsilon) - secondterm;
+        %eta1 = ((1+epsilon)*gamma1 - gamma2) / (epsilon*(2+epsilon));
+        %eta2 = ((1+epsilon)*gamma2 - gamma1) / (epsilon*(2+epsilon));
+        % TODO: recheck sign in front of eta1, et2 with theory!
+        zv = 1/(1+epsilon) * (lambda*v-Av - yv*epsilon + u*eta1); 
+        zu = 1/(1+epsilon) * (conj(lambda)*u-Astaru - conjyu*epsilon + v*conj(eta2));
+        z = [zv; conj(zu)];
+        r = r1 * lambda + r0;
+        assert(imag(r'*z) < 1e-6);
+        cf = real(r'*z);
 
-%        n = size(V,1);
-        Av = A*V(:,2);
-        vAu = V(:,1)'*Av;
-%        invMr0 = 1/(1+epsilon)*r0 + 1/(1+epsilon)/(2+epsilon)*vAu*[V(:,1);conj(V(:,2))];
-%        invMr1 = 1/(1+epsilon)*r1;
-        lambda = (V(:,2)'*A*V(:,2) + V(:,1)'*A*V(:,1)) / 2;
-        %r = r0 + lambda*r1;
-        %z = invMr0 + lambda * invMr1;
-
-        v1 = Av - V(:,2)*lambda;
-        u1 = V(:,1)'*A - lambda*V(:,1)';
-        u1mod = u1 - (u1*V(:,2))*V(:,2)';
-        cf = (norm(v1)^2 + norm(u1mod)^2 + epsilon/(2+epsilon)*abs(vAu)^2) / (1+epsilon);
-        u1mod = (u1 - 1/(2+epsilon) * (u1*V(:,2))*V(:,2)') / (1+epsilon);
-        v1mod = (v1 - 1/(2+epsilon) * V(:,1) * (V(:,1)'*v1)) / (1+epsilon);
-        z = [-v1mod; transpose(-u1mod)];
-        % z = [-v1mod; transpose(-u1mod)]
-        %delta = kron(conj(V(:,2)), z(1:n)) + kron(z(n+1:end),V(:,1));
-%        AplusDelta = A + make_Delta(P, delta);
-        Delta = -V(:,1) * u1mod  - v1mod * V(:,2)';
+        Delta = u * zu'  + zv * v';
         AplusDelta = A + Delta;
 
         store.normAv = norm(Av);
